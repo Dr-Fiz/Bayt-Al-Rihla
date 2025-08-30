@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, useParams, Link } from "react-router-dom";
+import { HashRouter, Routes, Route, useParams, Link } from "react-router-dom"; // ⬅️ HashRouter
 import App from "./App.jsx";
 import AqeedahBooksPage from "./aqeedah/AqeedahBooksPage.jsx";
 import KitabAtTawhidPage from "./aqeedah/books/KitabAtTawhid/KitabAtTawhidPage.jsx";
@@ -43,12 +43,10 @@ function ScholarPage() {
 }
 
 /* -------------------- Kitab at-Tawhid chapter auto-loader ------------------ */
-/* This grabs ALL files in src/aqeedah/books/KitabAtTawhid/*.jsx at build time */
 const chapterModules = import.meta.glob("./aqeedah/books/KitabAtTawhid/*.jsx"); // lazy by default
 
 function ChapterViewer() {
   const { chapterSlug } = useParams();
-  // Find a file that ends with `-<slug>.jsx` e.g. 01-kitab-at-tawheed.jsx
   const match = Object.entries(chapterModules).find(([p]) => p.endsWith(`-${chapterSlug}.jsx`));
 
   if (!match) {
@@ -115,16 +113,16 @@ function NotFound() {
 /* --------------------------------- Mount ---------------------------------- */
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter basename="/Bayt-Al-Rihla">
+    <HashRouter> {/* ← GitHub Pages-safe routing (/#/...) */}
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/aqeedah" element={<AqeedahBooksPage />} />
 
         {/* Books */}
         <Route path="/aqeedah/books/kitab-at-tawhid" element={<KitabAtTawhidPage />} />
-        {/* All 30 chapters auto-loaded by slug (e.g., /aqeedah/books/kitab-at-tawhid/kitab-at-tawheed) */}
         <Route path="/aqeedah/books/kitab-at-tawhid/:chapterSlug" element={<ChapterViewer />} />
-        {/* Stubs for the other books */}
+
+        {/* Stubs */}
         <Route path="/aqeedah/books/nullifiers" element={<NullifiersPage />} />
         <Route path="/aqeedah/books/usul-ath-thalatha" element={<UsulThalathaPage />} />
         <Route path="/aqeedah/books/wasitiyyah" element={<WasitiyyahPage />} />
@@ -135,6 +133,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         {/* Fallback */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   </React.StrictMode>
 );
