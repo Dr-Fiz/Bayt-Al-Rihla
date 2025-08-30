@@ -49,9 +49,12 @@ const GRADIENTS = [
 ];
 
 /* ------------------------------ Cards ------------------------------------ */
+// Turn Link into a motion component
+const MotionLink = motion(Link);
+
 const SubjectCard = ({ name, description, href, Icon, index = 0 }) => (
-  <motion.a
-    href={href}
+  <MotionLink
+    to={href} // ✅ use Router Link, not <a href>
     className="group relative block rounded-2xl border border-white/50 bg-white/85 p-6 shadow-sm ring-1 ring-slate-200/60 transition hover:shadow-xl hover:ring-emerald-300/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 backdrop-blur-sm"
     initial={{ opacity: 0, y: 10 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -71,7 +74,7 @@ const SubjectCard = ({ name, description, href, Icon, index = 0 }) => (
     <div className="pointer-events-none absolute right-4 top-4 opacity-0 transition-all group-hover:right-3 group-hover:opacity-100">
       <ArrowRight className="h-5 w-5 text-slate-400" aria-hidden="true" />
     </div>
-  </motion.a>
+  </MotionLink>
 );
 
 const ScholarCard = ({ s, index }) => (
@@ -129,19 +132,10 @@ export default function BaytAlRihlaHome() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-pink-50">
-      {/* Soft cozy glows */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(251,191,36,0.20),rgba(255,255,255,0))]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-40 top-40 -z-10 h-80 w-80 rounded-full bg-gradient-to-br from-rose-200/60 via-pink-200/50 to-amber-200/40 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-40 top-20 -z-10 h-80 w-80 rounded-full bg-gradient-to-br from-amber-200/60 via-orange-200/50 to-rose-200/40 blur-3xl"
-      />
+      {/* glows */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(251,191,36,0.20),rgba(255,255,255,0))]" />
+      <div aria-hidden className="pointer-events-none absolute -left-40 top-40 -z-10 h-80 w-80 rounded-full bg-gradient-to-br from-rose-200/60 via-pink-200/50 to-amber-200/40 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-40 top-20 -z-10 h-80 w-80 rounded-full bg-gradient-to-br from-amber-200/60 via-orange-200/50 to-rose-200/40 blur-3xl" />
 
       {/* Header */}
       <header className="mx-auto max-w-7xl px-6 pb-6 pt-10 sm:pt-12">
@@ -189,23 +183,17 @@ export default function BaytAlRihlaHome() {
             the core sciences of Islam. Choose a subject or explore scholars below.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a
-              href="#subjects"
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-            >
+            <a href="#subjects" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
               Browse Subjects <ArrowRight className="h-4 w-4" />
             </a>
-            <a
-              href="#scholars"
-              className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-            >
+            <a href="#scholars" className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
               View Scholars <ArrowRight className="h-4 w-4" />
             </a>
           </div>
         </motion.div>
       </section>
 
-      {/* SUBJECTS FIRST */}
+      {/* Subjects */}
       <section id="subjects" className="mx-auto max-w-7xl px-6 pb-16">
         <div className="mb-6 flex items-end justify-between">
           <div>
@@ -219,14 +207,21 @@ export default function BaytAlRihlaHome() {
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredSubjects.map((s, i) => (
-            <SubjectCard key={s.slug} name={s.name} description={s.description} href={`/${s.slug}`} Icon={s.Icon} index={i} />
+            <SubjectCard
+              key={s.slug}
+              name={s.name}
+              description={s.description}
+              href={`/${s.slug}`}   // ✅ Link will prepend basename (/Bayt-Al-Rihla)
+              Icon={s.Icon}
+              index={i}
+            />
           ))}
         </div>
 
         <p className="mt-8 text-center text-xs text-slate-500">Tip: Use the search box above to quickly find a topic.</p>
       </section>
 
-      {/* SCHOLARS SECOND (single-click to page) */}
+      {/* Scholars */}
       <section id="scholars" className="mx-auto max-w-7xl px-6 pb-24">
         <div className="mb-6 flex items-end justify-between">
           <div>
