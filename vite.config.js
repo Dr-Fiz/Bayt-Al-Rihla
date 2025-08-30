@@ -4,5 +4,5 @@ import tailwind from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwind()],
-  base: '/<Bayt-Al-Rihla>/', // <-- add this
+  base: '/Bayt-Al-Rihla/',   // ✅ exact, case-sensitive
 })

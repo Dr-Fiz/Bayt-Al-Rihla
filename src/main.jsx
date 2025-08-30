@@ -115,7 +115,7 @@ function NotFound() {
 /* --------------------------------- Mount ---------------------------------- */
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/Bayt-Al-Rihla">
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/aqeedah" element={<AqeedahBooksPage />} />
