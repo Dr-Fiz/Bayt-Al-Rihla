@@ -793,7 +793,23 @@ const QUESTIONS = [
 function Question({ q }) {
   const [selected, setSelected] = useState(null);
   const [revealed, setRevealed] = useState(false);
-  const correct = selected === q.answerIndex;
+
+  // --- normalize data shape ---
+  const hasOptions = Array.isArray(q.options);
+  const opts = hasOptions
+    ? q.options
+    : Array.isArray(q.choices)
+    ? q.choices.map((c) => c.text)
+    : [];
+
+  const computedIdx = Number.isInteger(q.answerIndex)
+    ? q.answerIndex
+    : Array.isArray(q.choices)
+    ? q.choices.findIndex((c) => c.key === q.answer) // e.g. 'B' -> index
+    : -1;
+
+  const answerIdx = computedIdx >= 0 ? computedIdx : 0; // safe fallback
+  const correct = selected === answerIdx;
 
   return (
     <Card className="border-emerald-200/70">
@@ -801,13 +817,16 @@ function Question({ q }) {
         <div className="rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-2 text-white shadow-md">
           <HelpCircle className="h-5 w-5" aria-hidden="true" />
         </div>
+
         <div className="flex-1">
           <p className="font-semibold text-slate-900">{q.prompt}</p>
+
           <div className="mt-3 grid gap-2">
-            {q.options.map((opt, idx) => {
+            {(opts || []).map((opt, idx) => {
               const isSelected = selected === idx;
-              const isCorrect = q.answerIndex === idx;
+              const isCorrect = answerIdx === idx;
               const showState = revealed && (isSelected || isCorrect);
+
               return (
                 <button
                   key={idx}
@@ -822,6 +841,7 @@ function Question({ q }) {
                   )}
                 >
                   <span className="pr-3 text-slate-800">{opt}</span>
+
                   {showState &&
                     (isCorrect ? (
                       <CheckCircle2
@@ -887,6 +907,8 @@ function Question({ q }) {
 
 function QuestionBank() {
   const reduce = useReducedMotion();
+  const items = Array.isArray(QUESTIONS) ? QUESTIONS : []; // guard
+
   return (
     <section id="bank" className="mx-auto max-w-7xl px-6 pb-16">
       <motion.div
@@ -905,15 +927,23 @@ function QuestionBank() {
           </p>
         </div>
         <Pill tone="sky">
-          <ListChecks className="h-3.5 w-3.5" aria-hidden="true" /> 10 questions
+          <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />{" "}
+          {items.length} questions
         </Pill>
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {QUESTIONS.map((q) => (
-          <Question key={q.id} q={q} />
-        ))}
-      </div>
+      {items.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white/90 p-4 text-slate-600">
+          No questions found. Check your <code>QUESTIONS</code> data
+          import/name/shape.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {items.map((q) => (
+            <Question key={q.id} q={q} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
