@@ -1,1721 +1,1402 @@
-// src/aqeedah/books/kitab-at-tawhid/02-categories-of-tawheed.jsx
-import React, { useMemo, useState, Suspense } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
 import {
+  ChevronLeft,
+  Sparkles,
+  BookOpen,
+  ScrollText,
   HelpCircle,
   CheckCircle2,
   XCircle,
-  Timer,
-  ChevronLeft,
-  BookOpen,
+  ListChecks,
+  Lightbulb,
+  AlertTriangle,
 } from "lucide-react";
 
-/* ─────────────────────────── Tiny UI helpers (vibrant) ─────────────────────────── */
+/* -------------------------------------------------------------------------
+ * Kitāb at-Tawḥīd — Chapter 2: Categories of Tawḥīd (Learner Edition)
+ * Route: /aqeedah/books/kitab-at-tawhid/categories-of-tawheed
+ * Focus: readable layout, vibrant accents, inline highlights, no sticky UI
+ * ------------------------------------------------------------------------- */
+
+/* ----------------------------- Tiny UI Helpers ---------------------------- */
+const cx = (...a) => a.filter(Boolean).join(" ");
 
 function Pill({ children, tone = "emerald" }) {
   const tones = {
-    emerald:
-      "border-emerald-500/80 bg-emerald-100 text-emerald-950 shadow-[inset_0_1px_0_#34d399]",
-    sky: "border-sky-500/80 bg-sky-100 text-sky-950 shadow-[inset_0_1px_0_#38bdf8]",
-    indigo:
-      "border-indigo-500/80 bg-indigo-100 text-indigo-950 shadow-[inset_0_1px_0_#6366f1]",
-    amber:
-      "border-amber-500/80 bg-amber-100 text-amber-950 shadow-[inset_0_1px_0_#f59e0b]",
-    rose: "border-rose-500/80 bg-rose-100 text-rose-950 shadow-[inset_0_1px_0_#f43f5e]",
-    gray: "border-slate-400 bg-slate-100 text-slate-900",
+    emerald: "border-emerald-400 bg-emerald-50 text-emerald-900",
+    sky: "border-sky-400 bg-sky-50 text-sky-900",
+    indigo: "border-indigo-400 bg-indigo-50 text-indigo-900",
+    rose: "border-rose-400 bg-rose-50 text-rose-900",
+    amber: "border-amber-400 bg-amber-50 text-amber-950",
   };
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold tracking-wide ${tones[tone]}`}
+      className={cx(
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold",
+        tones[tone]
+      )}
     >
       {children}
     </span>
   );
 }
 
-function SectionTitle({ id, title, kicker, tone = "emerald" }) {
-  const bars = {
-    emerald: "from-emerald-500 to-emerald-400",
-    sky: "from-sky-500 to-sky-400",
-    indigo: "from-indigo-600 to-indigo-400",
-    amber: "from-amber-500 to-amber-400",
-    rose: "from-rose-500 to-rose-400",
-  };
-  return (
-    <div id={id} className="not-prose">
-      <div
-        className={`h-1.5 w-28 rounded-full bg-gradient-to-r ${bars[tone]} drop-shadow`}
-      />
-      <div className="mt-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
-        {kicker}
-      </div>
-      <h2 className="mt-1 text-2xl md:text-3xl font-black tracking-tight text-slate-900">
-        {title}
-      </h2>
-    </div>
-  );
-}
-
-function SoftCard({ children, tone = "emerald", className = "" }) {
-  const frames = {
-    emerald:
-      "border-emerald-400 ring-emerald-500/20 bg-gradient-to-br from-emerald-50 to-white",
-    sky: "border-sky-400 ring-sky-500/20 bg-gradient-to-br from-sky-50 to-white",
-    indigo:
-      "border-indigo-400 ring-indigo-500/20 bg-gradient-to-br from-indigo-50 to-white",
-    amber:
-      "border-amber-400 ring-amber-500/20 bg-gradient-to-br from-amber-50 to-white",
-    rose: "border-rose-400 ring-rose-500/20 bg-gradient-to-br from-rose-50 to-white",
-    gray: "border-slate-300 ring-slate-400/15 bg-white",
-  };
-  return (
-    <section
-      className={`rounded-3xl border p-5 shadow-md ring-1 ${frames[tone]} ${className}`}
-    >
-      {children}
-    </section>
-  );
-}
-
-function AyahCard({ arabic, translation, refText, tone = "sky" }) {
-  const borders = {
-    sky: "border-sky-300 from-sky-50",
-    emerald: "border-emerald-300 from-emerald-50",
-    indigo: "border-indigo-300 from-indigo-50",
-    amber: "border-amber-300 from-amber-50",
-    rose: "border-rose-300 from-rose-50",
-    gray: "border-slate-300 from-white",
-  }[tone];
-
-  const titleColor = {
-    sky: "text-sky-900",
-    emerald: "text-emerald-900",
-    indigo: "text-indigo-900",
-    amber: "text-amber-900",
-    rose: "text-rose-900",
-    gray: "text-slate-900",
-  }[tone];
-
-  const refColor = {
-    sky: "text-sky-800",
-    emerald: "text-emerald-800",
-    indigo: "text-indigo-800",
-    amber: "text-amber-800",
-    rose: "text-rose-800",
-    gray: "text-slate-700",
-  }[tone];
-
+function Card({ children, className = "" }) {
   return (
     <div
-      className={`rounded-2xl border ${borders} bg-gradient-to-br to-white p-5 shadow-sm`}
+      className={cx(
+        "rounded-2xl border border-white/60 bg-white/80 p-5 shadow-sm ring-1 ring-slate-200/60 backdrop-blur-sm",
+        className
+      )}
     >
-      {arabic && (
-        <p
-          dir="rtl"
-          lang="ar"
-          className={`text-2xl leading-relaxed font-semibold ${titleColor}`}
-        >
-          {arabic}
-        </p>
-      )}
-      {translation && <p className="mt-3 text-slate-800">{translation}</p>}
-      {refText && (
-        <div className={`mt-2 text-[11px] font-extrabold ${refColor}`}>
-          {refText}
-        </div>
-      )}
+      {children}
     </div>
   );
 }
 
-/* ───────────────────────────────── Page ───────────────────────────────── */
+/* --------------------------- Tone & Section Kit -------------------------- */
+const TONES = {
+  emerald: {
+    bar: "bg-gradient-to-r from-emerald-400 via-teal-400 to-sky-400",
+    badge: "bg-emerald-100 text-emerald-900 border border-emerald-300",
+    border: "border-emerald-200/70",
+    soft: "from-emerald-50/70 via-teal-50/60 to-sky-50/70",
+    icon: "from-emerald-500 via-teal-500 to-sky-500",
+  },
+  amber: {
+    bar: "bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400",
+    badge: "bg-amber-100 text-amber-950 border border-amber-300",
+    border: "border-amber-200/70",
+    soft: "from-amber-50/70 via-orange-50/60 to-rose-50/70",
+    icon: "from-amber-500 via-orange-500 to-rose-500",
+  },
+  sky: {
+    bar: "bg-gradient-to-r from-sky-400 via-cyan-400 to-emerald-400",
+    badge: "bg-sky-100 text-sky-950 border border-sky-300",
+    border: "border-sky-200/70",
+    soft: "from-sky-50/70 via-cyan-50/60 to-emerald-50/70",
+    icon: "from-sky-500 via-cyan-500 to-emerald-500",
+  },
+  indigo: {
+    bar: "bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400",
+    badge: "bg-indigo-100 text-indigo-950 border border-indigo-300",
+    border: "border-indigo-200/70",
+    soft: "from-indigo-50/70 via-violet-50/60 to-fuchsia-50/70",
+    icon: "from-indigo-500 via-violet-500 to-fuchsia-500",
+  },
+  rose: {
+    bar: "bg-gradient-to-r from-rose-400 via-pink-400 to-fuchsia-400",
+    badge: "bg-rose-100 text-rose-950 border border-rose-300",
+    border: "border-rose-200/70",
+    soft: "from-rose-50/70 via-pink-50/60 to-fuchsia-50/70",
+    icon: "from-rose-500 via-pink-500 to-fuchsia-500",
+  },
+};
 
-export default function KTT_02() {
-  const base = "/aqeedah/books/kitab-at-tawhid";
-  const meta = { no: 2, title: "The Three Categories (Tawḥīd)" };
-  const [searchParams, setSearchParams] = useSearchParams();
-  const mode = searchParams.get("quiz") === "1" ? "quiz" : "article";
-
-  if (mode === "quiz") {
-    return <KTT02_QuizScreen setSearchParams={setSearchParams} />;
-  }
-
+function Section({ id, title, tone = "emerald", children, subtitle }) {
+  const t = TONES[tone] || TONES.emerald;
   return (
-    <div className="min-h-screen bg-[radial-gradient(1200px_600px_at_10%_-10%,rgba(16,185,129,0.35),transparent),radial-gradient(900px_500px_at_90%_-10%,rgba(56,189,248,0.35),transparent)]">
-      {/* Header */}
-      <header className="mx-auto max-w-6xl px-6 pt-10 pb-6">
-        <div className="flex items-center justify-between">
-          <Link
-            to={base}
-            className="inline-flex items-center gap-2 text-sm text-slate-700 hover:text-emerald-800"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back to index
-          </Link>
-          <div className="flex items-center gap-2 text-emerald-900">
-            <BookOpen className="h-5 w-5" />
-            <span className="text-sm font-bold">Bayt Al Rihla • ʿAqīdah</span>
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">
-            <span className="mr-2 text-emerald-700">
-              {String(meta.no).padStart(2, "0")}.
-            </span>
-            {meta.title}
-          </h1>
-          <p className="-mt-1 text-xs font-extrabold text-slate-600">
-            Rubūbiyyah • Ulūhiyyah • Asmāʾ wa Ṣifāt — clear, vibrant, and
-            proof-based
-          </p>
-        </div>
-
-        <button
-          onClick={() => setSearchParams({ quiz: "1" })}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white shadow-md hover:bg-emerald-700"
-        >
-          Test yourself
-        </button>
-      </header>
-
-      {/* Content */}
-      <main className="mx-auto max-w-6xl px-6 pb-20">
-        {/* Overview & Map */}
-        <SoftCard tone="emerald">
-          <div className="flex items-center gap-2">
-            <Pill>Overview &amp; Map</Pill>
-          </div>
-          <p className="mt-3 text-slate-800">
-            The scholars explain <span className="font-semibold">Tawḥīd</span>{" "}
-            in three complementary angles:{" "}
-            <span className="font-semibold">Rubūbiyyah</span> (Lordship),
-            <span className="font-semibold"> Ulūhiyyah/ʿIbādah</span> (Worship),
-            and <span className="font-semibold">Asmāʾ wa Ṣifāt</span> (Names
-            &amp; Attributes). Below are concise definitions with core proofs.
-          </p>
-        </SoftCard>
-
-        {/* First Category: Rubūbiyyah — CREATION */}
-        <SoftCard tone="emerald" className="mt-5">
-          <div className="flex items-center gap-2">
-            <Pill tone="emerald">1) at-Tawḥīd ar-Rubūbiyyah — Lordship</Pill>
-          </div>
-
-          <p className="mt-3 text-[15px] leading-7 text-slate-800">
-            This is to single out Allah—the Mighty and Sublime—with{" "}
-            <strong>creation</strong>, <strong>ownership</strong>, and{" "}
-            <strong>control</strong>.
-          </p>
-
-          {/* Creation */}
-          <div className="mt-5">
-            <p className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">
-              Creation
-            </p>
-
-            <AyahCard
-              tone="sky"
-              arabic="أَلَا لَهُ الْخَلْقُ وَالْأَمْرُ ۗ تَبَارَكَ اللَّهُ رَبُّ الْعَالَمِينَ"
-              translation="“Surely His is the creation and commandment…”"
-              refText="Al-Aʿrāf 7:54"
-            />
-
-            <SoftCard tone="gray" className="mt-3">
-              <p className="text-[14px] leading-7 text-slate-800">
-                In Arabic rhetoric this construction indicates <em>al-ḥaṣr</em>{" "}
-                (restriction): the predicate is brought forward, which restricts
-                creation and command to Allah alone.
-              </p>
-            </SoftCard>
-
-            <AyahCard
-              tone="emerald"
-              arabic="هَلْ مِنْ خَالِقٍ غَيْرُ اللَّهِ يَرْزُقُكُمْ مِنَ السَّمَاءِ وَالْأَرْضِ ۚ"
-              translation="“Is there any creator other than Allah who provides for you from the sky and the earth?”"
-              refText="Fāṭir 35:3"
-            />
-
-            <SoftCard tone="gray" className="mt-3">
-              <p className="text-[14px] leading-7 text-slate-800">
-                This verse demonstrates exclusivity: the interrogative is a{" "}
-                <em>challenge</em>, showing that none can claim real creation
-                besides Him.
-              </p>
-            </SoftCard>
-
-            <AyahCard
-              tone="indigo"
-              arabic="فَتَبَارَكَ اللَّهُ أَحْسَنُ الْخَالِقِينَ"
-              translation="“Blessed is Allah, the best of creators.”"
-              refText="Al-Muʾminūn 23:14"
-            />
-
-            <SoftCard tone="gray" className="mt-3">
-              <div className="text-[14px] leading-7 text-slate-800">
-                <p className="font-semibold">Clarification:</p>
-                <ul className="mt-1 list-disc pl-5">
-                  <li>
-                    Reports like the statement to picture-makers, “Bring to life
-                    what you have created,” do <em>not</em> refer to true
-                    creation from nothing. It is only transforming forms.
-                  </li>
-                  <li>
-                    Human “creation” is restricted to what people can manipulate
-                    and is extremely limited. True creation belongs to Allah
-                    alone.
-                  </li>
-                </ul>
-              </div>
-            </SoftCard>
-          </div>
-        </SoftCard>
-
-        {/* ── Rational proof: only One Creator ───────────────────────────────── */}
-        <SoftCard tone="indigo" className="mt-5">
-          <div className="flex items-center gap-2">
-            <Pill tone="indigo">Rational Proof — Only One Creator</Pill>
-          </div>
-
-          <AyahCard
-            tone="indigo"
-            arabic="مَا اتَّخَذَ اللَّهُ مِنْ وَلَدٍ وَمَا كَانَ مَعَهُ مِنْ إِلَٰهٍ ۚ إِذًا لَذَهَبَ كُلُّ إِلَٰهٍ بِمَا خَلَقَ وَلَعَلَا بَعْضُهُمْ عَلَىٰ بَعْضٍ ۚ سُبْحَانَ اللَّهِ عَمَّا يَصِفُونَ"
-            translation="“Allah has not taken a son, nor is there any god along with Him; if there had been many gods, each would have taken away what he created, and some would have tried to overcome others.”"
-            refText="Al-Muʾminūn 23:91"
-          />
-
-          <SoftCard tone="gray" className="mt-3">
-            <p className="text-[14px] leading-7 text-slate-800">
-              If two creators existed, each would keep his own creation to
-              himself—as kings deny rivals. Seeking sole authority, either one{" "}
-              <strong>dominates</strong> the other (then he alone is Lord), or
-              each is <strong>unable</strong> to overcome the other (then
-              neither is fit for Lordship). Hence, the Creator is{" "}
-              <strong>One</strong>.
-            </p>
-          </SoftCard>
-        </SoftCard>
-
-        {/* First Category continued — OWNERSHIP */}
-        <SoftCard tone="amber" className="mt-6">
-          <div className="flex items-center gap-2">
-            <Pill tone="amber">Ownership</Pill>
-          </div>
-
-          <p className="mt-3 text-[15px] leading-7 text-slate-800">
-            Singling out Allah with <strong>ownership</strong> means believing
-            that no one owns the creatures except their Creator.
-          </p>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <AyahCard
-              tone="amber"
-              translation="“Allah’s is the dominion of the heavens and the earth.”"
-              refText="Āl ʿImrān 3:189"
-            />
-            <AyahCard
-              tone="amber"
-              translation="“Say: in whose hand is the sovereignty of everything?”"
-              refText="Al-Muʾminūn 23:88"
-            />
-          </div>
-
-          <SoftCard tone="gray" className="mt-4">
-            <div className="text-[14px] leading-7 text-slate-800">
-              <p className="font-semibold">Human ownership is limited:</p>
-              <ul className="mt-2 list-disc pl-5">
-                <li>
-                  It is <strong>restricted</strong> — one only “owns” what is in
-                  his possession, not what belongs to others.
-                </li>
-                <li>
-                  It is <strong>defective</strong> — a person may lack full
-                  control over what he “owns”.
-                </li>
-                <li>
-                  It is <strong>conditional</strong> — bound by Sharīʿah; one
-                  cannot use property except as Allah has permitted (e.g.,
-                  burning wealth or harming an animal is not permissible).
-                </li>
-              </ul>
-
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                <AyahCard
-                  tone="gray"
-                  translation="“Except from their wives or (the captives and slaves) that their right hands possess — for then they are free of blame.”"
-                  refText="Al-Muʾminūn 23:6"
-                />
-                <AyahCard
-                  tone="gray"
-                  translation="“Or from that whereof you possess its keys.”"
-                  refText="An-Nūr 24:61"
-                />
-              </div>
-
-              <p className="mt-3">
-                Contrast this with Allah: He owns{" "}
-                <em>generally, perfectly, and unrestrictedly</em>.
-              </p>
-            </div>
-          </SoftCard>
-        </SoftCard>
-
-        {/* First Category continued — CONTROL */}
-        <SoftCard tone="sky" className="mt-6">
-          <div className="flex items-center gap-2">
-            <Pill tone="sky">Control (Tadbīr)</Pill>
-          </div>
-
-          <p className="mt-3 text-[15px] leading-7 text-slate-800">
-            Singling out Allah with <strong>control</strong> means believing
-            that no one disposes the affairs of the universe except Allah alone.
-          </p>
-
-          <div className="mt-4 grid gap-4">
-            <AyahCard
-              tone="sky"
-              arabic="قُلْ مَن يَرْزُقُكُم مِّنَ السَّمَاءِ وَالْأَرْضِ أَمَّن يَمْلِكُ السَّمْعَ وَالْأَبْصَارَ وَمَن يُخْرِجُ الْحَيَّ مِنَ الْمَيِّتِ وَيُخْرِجُ الْمَيِّتَ مِنَ الْحَيِّ وَمَن يُدَبِّرُ الْأَمْرَ ۚ فَسَيَقُولُونَ اللَّهُ ۚ فَقُلْ أَفَلَا تَتَّقُونَ ۝ فَذَٰلِكُمُ اللَّهُ رَبُّكُمُ الْحَقُّ ۖ فَمَاذَا بَعْدَ الْحَقِّ إِلَّا الضَّلَالُ ۖ فَأَنَّىٰ تُصْرَفُونَ"
-              translation="“Say (O Muhammad ﷺ): Who provides for you from the sky and the earth? Or Who owns hearing and sight? And Who brings out the living from the dead and brings out the dead from the living? And Who disposes the affairs? They will say: Allah. Say: Will you not then be afraid? That is Allah, your Lord in truth. So after the truth what is there except error? How then are you turned away?”"
-              refText="Yūnus 10:31–32"
-            />
-            <AyahCard
-              tone="sky"
-              arabic="وَلَئِن سَأَلْتَهُم مَّنْ خَلَقَ السَّمَاوَاتِ وَالْأَرْضَ لَيَقُولُنَّ خَلَقَهُنَّ الْعَزِيزُ الْعَلِيمُ"
-              translation="“If you ask them, ‘Who created the heavens and the earth?’ they will surely say: ‘The All-Mighty, the All-Knower created them.’”"
-              refText="Az-Zukhruf 43:9"
-            />
-          </div>
-
-          <SoftCard tone="gray" className="mt-4">
-            <p className="text-[14px] leading-7 text-slate-800">
-              Human “control” is <strong>restricted</strong> to what one
-              possesses and <strong>only</strong> as permitted by the Sharīʿah.
-              True, comprehensive disposal of affairs is Allah’s alone.
-            </p>
-          </SoftCard>
-        </SoftCard>
-
-        {/* Pagans’ admission of Rubūbiyyah */}
-        <SoftCard tone="indigo" className="mt-6">
-          <div className="flex items-center gap-2">
-            <Pill tone="indigo">Pagans’ Admission</Pill>
-          </div>
-          <p className="mt-3 text-[15px] leading-7 text-slate-800">
-            The polytheists among whom the Messengers were sent generally
-            acknowledged Allah’s Rubūbiyyah — that He alone created, owns, and
-            controls. No people are known to have asserted two <em>equal</em>{" "}
-            creators. Their error was in worship, not in Lordship.
-          </p>
-        </SoftCard>
-
-        {/* The case of Firʿawn (arrogant denial) */}
-        <SoftCard tone="rose" className="mt-6">
-          <div className="flex items-center gap-2">
-            <Pill tone="rose">Firʿawn’s Arrogant Denial</Pill>
-          </div>
-
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <AyahCard
-              tone="rose"
-              translation="“I am your Lord, the Most Exalted.”"
-              refText="An-Nāziʿāt 79:24"
-            />
-            <AyahCard
-              tone="rose"
-              translation="“I do not know for you any deity other than me.”"
-              refText="Al-Qaṣaṣ 28:38"
-            />
-          </div>
-
-          <AyahCard
-            tone="rose"
-            translation="“They denied them (the signs) wrongfully and arrogantly, though their souls were convinced thereof.”"
-            refText="An-Naml 27:14"
-          />
-
-          <AyahCard
-            tone="rose"
-            translation="“(Mūsā said to Firʿawn): Verily, you know that none has sent down these (signs) except the Lord of the heavens and the earth.”"
-            refText="Al-Isrāʾ 17:102"
-          />
-
-          <SoftCard tone="gray" className="mt-3">
-            <p className="text-[14px] leading-7 text-slate-800">
-              Thus Firʿawn’s rejection was not ignorance but{" "}
-              <strong>arrogance</strong>: he knew the truth inwardly yet refused
-              to submit.
-            </p>
-          </SoftCard>
-        </SoftCard>
-
-        {/* Dualists (fire-worshippers) */}
-        <SoftCard tone="amber" className="mt-6">
-          <div className="flex items-center gap-2">
-            <Pill tone="amber">Fire-Worshippers’ Claim</Pill>
-          </div>
-          <div className="mt-3 text-[15px] leading-7 text-slate-800">
-            <p>
-              Some dualists claimed two creators: <strong>light</strong> (for
-              good) and <strong>darkness</strong> (for evil). Even by their own
-              reasoning this fails:
-            </p>
-            <ul className="mt-2 list-disc pl-5">
-              <li>
-                They considered light inherently superior; the superior cannot
-                be an equal rival to the inferior.
-              </li>
-              <li>
-                Darkness is mere <em>absence</em> (non-existence), while light
-                is positive existence and illumination — hence essentially
-                better.
-              </li>
-              <li>
-                Among philosophers they even differed whether darkness is
-                pre-existent or created — a further inconsistency.
-              </li>
-            </ul>
-          </div>
-        </SoftCard>
-
-        {/* =========================================================
-   CHUNK 3 — Second Category (Ulūhiyyah / ʿIbādah)
-   Paste this block inside <main>…</main> after CHUNK 2.
-   ========================================================= */}
-
-        <SoftCard tone="sky" className="p-5 mt-10">
-          <div className="flex items-center gap-2">
-            <Pill tone="sky">Second Category</Pill>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">
-              at-Tawḥīd al-Ulūhiyyah (al-ʿIbādah) — Singling out Allah in
-              Worship
-            </h3>
-          </div>
-
-          <p className="mt-3 text-[15px] leading-7 text-slate-800">
-            Also called <strong>Tawḥīd al-ʿIbādah</strong>. When mentioned in
-            connection with Allah, it is called <em>Tawḥīd al-Ulūhiyyah</em>;
-            and when mentioned in connection with the servants, it is called{" "}
-            <em>al-ʿIbādah</em> (worship). It is to single out Allah the Mighty
-            and Sublime with <strong>every act of worship</strong>.
-          </p>
-
-          <AyahCard
-            tone="sky"
-            arabic="ذَٰلِكَ بِأَنَّ اللَّهَ هُوَ الْحَقُّ وَأَنَّ مَا يَدْعُونَ مِن دُونِهِ هُوَ الْبَاطِلُ وَأَنَّ اللَّهَ هُوَ الْعَلِيُّ الْكَبِيرُ"
-            translation="That is because it is Allah alone Who is the True God, and whatever they call upon besides Him is false; and because it is Allah alone Who is the Most High, the Incomparably Great."
-            refText="(Luqmān 31:30)"
-          />
-
-          {/* Meaning of al-ʿIbādah */}
-          <div className="mt-4 rounded-2xl border border-sky-300 bg-gradient-to-br from-sky-50 to-white p-5">
-            <p className="text-[13px] font-extrabold uppercase tracking-wide text-sky-700">
-              Meaning of al-ʿIbādah — Two Usages
-            </p>
-            <ol className="mt-2 list-decimal pl-5 text-[15px] leading-7 text-slate-800">
-              <li className="mb-2">
-                <strong>Worship itself:</strong> submitting to Allah by doing
-                His commands and avoiding His prohibitions, out of love and
-                reverence for Him.
-              </li>
-              <li>
-                <strong>The means by which worship is done:</strong> everything
-                Allah loves and is pleased with — sayings and deeds, outward and
-                inward.{" "}
-                <span className="block mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-[14px]">
-                  <span className="font-semibold">Ibn Taymiyyah:</span> “An
-                  inclusive word for all that Allah loves and is pleased with;
-                  of utterances and deeds — manifest and hidden.”
-                </span>
-              </li>
-            </ol>
-
-            <p className="mt-3 text-[15px] leading-7 text-slate-800">
-              <strong>Example — Ṣalāh (prayer):</strong> its performance is
-              worship itself, and it is also a vehicle by which worship is
-              performed.
-            </p>
-          </div>
-
-          {/* Requirements / proofs */}
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-amber-300 bg-gradient-to-br from-amber-50 to-white p-5">
-              <p className="text-[13px] font-extrabold uppercase tracking-wide text-amber-700">
-                Requirements of Tawḥīd al-ʿIbādah
-              </p>
-              <ul className="mt-2 list-disc pl-5 text-[15px] leading-7 text-slate-800">
-                <li>Be subservient to Allah alone.</li>
-                <li>Submit to Him out of love and reverence.</li>
-                <li>Worship Him with what He has legislated and approved.</li>
-              </ul>
-              <div className="mt-3 space-y-3">
-                <AyahCard
-                  tone="amber"
-                  translation="So set up not another god with Allah lest He sit you down condemned and forsaken."
-                  refText="(Al-Isrāʾ 17:22)"
-                />
-                <AyahCard
-                  tone="amber"
-                  translation="All praise is due to Allah, Lord of the worlds."
-                  refText="(Al-Fātiḥah 1:1) — His Lordship is the reason He alone deserves worship."
-                />
-                <AyahCard
-                  tone="amber"
-                  translation="O mankind! Worship your Lord Who created you and those before you so that you may attain righteousness."
-                  refText="(Al-Baqarah 2:21)"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-rose-300 bg-gradient-to-br from-rose-50 to-white p-5">
-              <p className="text-[13px] font-extrabold uppercase tracking-wide text-rose-700">
-                Refutation of False Worship
-              </p>
-              <p className="mt-2 text-[15px] leading-7 text-slate-800">
-                The One set apart with creation is the One Who deserves worship.
-                It is sheer foolishness to worship created things which perish
-                and cannot benefit, give life, sustain, or extend lifespan.
-              </p>
-              <ul className="mt-2 list-disc pl-5 text-[15px] leading-7 text-slate-800">
-                <li>
-                  Created things will perish and cannot benefit or harm you.
-                </li>
-                <li>
-                  They cannot give life, sustain provision, or extend lifespan.
-                </li>
-                <li>
-                  Worshipping the dead (e.g., calling upon someone rotting in
-                  his grave) is irrational — he cannot benefit himself, let
-                  alone you. In reality, he is in need of <em>your</em>{" "}
-                  supplication, not the reverse.
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Most rejected category */}
-          <div className="mt-6 rounded-2xl border border-indigo-300 bg-gradient-to-br from-indigo-50 to-white p-5">
-            <p className="text-[13px] font-extrabold uppercase tracking-wide text-indigo-700">
-              The Most Rejected Category of Tawḥīd
-            </p>
-            <p className="mt-2 text-[15px] leading-7 text-slate-800">
-              This is the category most people denied. They often admitted
-              Allah’s Lordship (Rubūbiyyah) but rejected His sole right to
-              worship.
-            </p>
-            <div className="mt-3 space-y-3">
-              <AyahCard
-                tone="indigo"
-                translation="We did not send any Messenger before you (O Muḥammad ﷺ) except that We revealed to him: ‘None has the right to be worshipped but I, so worship Me alone.’"
-                refText="(Al-Anbiyāʾ 21:25)"
-              />
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[14px] leading-6 text-slate-700">
-                <span className="font-semibold">Ḥadīth:</span> “I saw a prophet
-                with a group; a prophet with one or two persons; and a prophet
-                with whom there was nobody.”{" "}
-                <span className="text-slate-500">
-                  (al-Bukhārī &amp; Muslim)
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Important note */}
-          <div className="mt-6 rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-white p-5">
-            <p className="text-[13px] font-extrabold uppercase tracking-wide text-emerald-700">
-              Important Note
-            </p>
-            <p className="mt-2 text-[15px] leading-7 text-slate-800">
-              Many later writers over-emphasized Rubūbiyyah as if addressing
-              people who deny Allah’s existence. Although such deniers exist,
-              many Muslims slip into <em>shirk</em> in worship without realizing
-              it. Therefore, scholars stress teaching
-              <strong> Tawḥīd al-Ulūhiyyah</strong> clearly so that those who
-              claim Islam do not unknowingly commit acts of worship for other
-              than Allah.
-            </p>
-          </div>
-        </SoftCard>
-
-        {/* -------------- CHUNK 3 end.
-    Ask me for CHUNK 4 and I’ll add the Third Category:
-    Asmāʾ & Ṣifāt — affirmation & negation; avoid Taḥrīf, Taʿṭīl,
-    Takyīf, Tamthīl; quotes of al-Ghazālī and ar-Rāzī; and the
-    Qurʾānic anchors (42:11, 20:5, 35:10, 20:110) with guidance.
-   ----------------------------------------------------------- */}
-
-        {/* =========================================================
-   CHUNK 4 — Third Category (Asmāʾ & Ṣifāt)
-   Paste this block after CHUNK 3, still inside <main>.
-   ========================================================= */}
-
-        <SoftCard tone="amber" className="p-5 mt-10">
-          <div className="flex items-center gap-2">
-            <Pill tone="amber">Third Category</Pill>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">
-              at-Tawḥīd al-Asmāʾ waṣ-Ṣifāt — Singling out Allah in His Names &
-              Attributes
-            </h3>
-          </div>
-
-          <p className="mt-3 text-[15px] leading-7 text-slate-800">
-            This means to single out Allah the Mighty and Sublime with His{" "}
-            <strong>Names</strong> and
-            <strong> Attributes</strong>. It entails two obligations:
-          </p>
-
-          <div className="mt-3 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-white p-5">
-              <p className="text-[13px] font-extrabold uppercase tracking-wide text-emerald-700">
-                1) Affirmation (Ithbāt)
-              </p>
-              <p className="mt-1 text-[15px] leading-7 text-slate-800">
-                Affirm for Allah everything He affirmed for Himself in the
-                Qurʾān and what the Prophet ﷺ affirmed for Him in the Sunnah —
-                without distortion or speculation.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-rose-300 bg-gradient-to-br from-rose-50 to-white p-5">
-              <p className="text-[13px] font-extrabold uppercase tracking-wide text-rose-700">
-                2) Negation (Nafy)
-              </p>
-              <p className="mt-1 text-[15px] leading-7 text-slate-800">
-                Negate likeness and partners in His Names and Attributes; none
-                of creation is like Him in any respect.
-              </p>
-            </div>
-          </div>
-
-          <AyahCard
-            tone="indigo"
-            arabic="لَيْسَ كَمِثْلِهِ شَيْءٌ وَهُوَ السَّمِيعُ الْبَصِيرُ"
-            translation="There is nothing whatever like unto Him, and He is the All-Hearing, the All-Seeing."
-            refText="(Ash-Shūrā 42:11)"
-          />
-
-          {/* Affirmation & Negation Examples */}
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-white p-5">
-              <p className="text-[13px] font-extrabold uppercase tracking-wide text-emerald-700">
-                Examples of Affirmation
-              </p>
-              <div className="mt-2 space-y-3">
-                <AyahCard
-                  tone="emerald"
-                  arabic="الرَّحْمَٰنُ عَلَى الْعَرْشِ اسْتَوَى"
-                  translation="He is the Gracious God Who has settled Himself firmly over the Throne."
-                  refText="(Ṭāhā 20:5)"
-                />
-                <AyahCard
-                  tone="emerald"
-                  arabic="إِلَيْهِ يَصْعَدُ الْكَلِمُ الطَّيِّبُ"
-                  translation="Unto Him ascend pure words."
-                  refText="(Fāṭir 35:10)"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-rose-300 bg-gradient-to-br from-rose-50 to-white p-5">
-              <p className="text-[13px] font-extrabold uppercase tracking-wide text-rose-700">
-                Examples of Negation
-              </p>
-              <div className="mt-2 space-y-3">
-                <AyahCard
-                  tone="rose"
-                  arabic="لَيْسَ كَمِثْلِهِ شَيْءٌ"
-                  translation="There is nothing whatever like unto Him."
-                  refText="(Ash-Shūrā 42:11)"
-                />
-                <AyahCard
-                  tone="rose"
-                  arabic="وَلَا يُحِيطُونَ بِهِ عِلْمًا"
-                  translation="…but they cannot compass Him with their knowledge."
-                  refText="(Ṭāhā 20:110)"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* The Four Errors to Avoid */}
-          <div className="mt-6 rounded-2xl border border-amber-300 bg-gradient-to-br from-amber-50 to-white p-5">
-            <p className="text-[13px] font-extrabold uppercase tracking-wide text-amber-700">
-              Avoid These Four Errors
-            </p>
-            <ul className="mt-2 list-disc pl-5 text-[15px] leading-7 text-slate-800">
-              <li>
-                <strong>Taḥrīf (Distortion):</strong> twisting words away from
-                their apparent meanings.
-              </li>
-              <li>
-                <strong>Taʿṭīl (Negation):</strong> denying what Allah affirmed
-                of His Names/Attributes.
-              </li>
-              <li>
-                <strong>Takyīf (Asking “How”):</strong> claiming to know the
-                modality or “how-ness” of His Attributes.
-              </li>
-              <li>
-                <strong>Tamthīl (Likeness):</strong> likening Allah’s Attributes
-                to those of creation. (Whoever makes <em>Tamthīl</em> has
-                necessarily made <em>Takyīf</em>, though not vice-versa.)
-              </li>
-            </ul>
-          </div>
-
-          {/* On Ta'wīl vs Tafsīr */}
-          <div className="mt-6 rounded-2xl border border-sky-300 bg-gradient-to-br from-sky-50 to-white p-5">
-            <p className="text-[13px] font-extrabold uppercase tracking-wide text-sky-700">
-              “Taʾwīl” vs. Tafsīr — What Counts as Distortion?
-            </p>
-            <p className="mt-2 text-[15px] leading-7 text-slate-800">
-              Some call themselves <em>Ahl al-Taʾwīl</em> (“the people of
-              interpretation”) to soften the word
-              <em> Taḥrīf</em>. But the criterion is clear:
-            </p>
-            <ul className="mt-2 list-disc pl-5 text-[15px] leading-7 text-slate-800">
-              <li>
-                If an interpretation is supported by{" "}
-                <strong>sound evidence</strong>, it is proper{" "}
-                <strong>Tafsīr</strong> (explanation).
-              </li>
-              <li>
-                If it lacks sound proof and merely diverts a text from its
-                apparent meaning, it is <strong>Taḥrīf</strong> (distortion).
-              </li>
-            </ul>
-            <p className="mt-2 text-[15px] leading-7 text-slate-800">
-              Those who tread this path ended up affirming some attributes but
-              with distortion — a way contrary to Ahl as-Sunnah wal-Jamāʿah;
-              their writings contain interpolations and contradictions.
-            </p>
-          </div>
-
-          {/* Scholars' admissions (al-Ghazālī & ar-Rāzī) */}
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <p className="text-sm font-semibold text-slate-900">
-                Imām al-Ghazālī on Theological Rhetoric
-              </p>
-              <blockquote className="mt-2 text-[14px] leading-6 text-slate-700">
-                He noted the <em>errors, inconsistency, and contradiction</em>{" "}
-                found among the practitioners of kalām and that their method
-                lacks certainty.
-              </blockquote>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <p className="text-sm font-semibold text-slate-900">
-                Imām Fakhr ad-Dīn ar-Rāzī
-              </p>
-              <ul className="mt-2 list-disc pl-5 text-[14px] leading-6 text-slate-700 space-y-1">
-                <li>
-                  “The ultimate end of preferring intellect (over revelation) is
-                  vanity.”
-                </li>
-                <li>
-                  “Most of the efforts of the scholars of theological rhetoric
-                  is misguidance.”
-                </li>
-                <li>“Our souls are in desolation inside our bodies.”</li>
-                <li>
-                  “The ultimate goal of our lives is toward harmful and bad
-                  consequences.”
-                </li>
-                <li>
-                  “We have not gained from our researches except hearsay.”
-                </li>
-                <li>
-                  “I scrutinized the paths of freethinkers and philosophers; I
-                  found no cure in them nor water for the thirsty. The best way
-                  is the Qurʾān. I read and affirm:
-                  <span className="block mt-1 font-semibold">
-                    الرَّحْمَٰنُ عَلَى الْعَرْشِ اسْتَوَى (Ṭāhā 20:5); إِلَيْهِ
-                    يَصْعَدُ الْكَلِمُ الطَّيِّبُ (Fāṭir 35:10)
-                  </span>
-                  and I negate likeness and encompassing knowledge, as in:
-                  <span className="block mt-1 font-semibold">
-                    لَيْسَ كَمِثْلِهِ شَيْءٌ (Ash-Shūrā 42:11); وَلَا يُحِيطُونَ
-                    بِهِ عِلْمًا (Ṭāhā 20:110)
-                  </span>
-                  Whoever experiences what I experienced will recognize what I
-                  recognized.”
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Method of Ahl as-Sunnah */}
-          <div className="mt-6 rounded-2xl border border-indigo-300 bg-gradient-to-br from-indigo-50 to-white p-5">
-            <p className="text-[13px] font-extrabold uppercase tracking-wide text-indigo-700">
-              The Way of Ahl as-Sunnah wal-Jamāʿah
-            </p>
-            <ul className="mt-2 list-disc pl-5 text-[15px] leading-7 text-slate-800">
-              <li>Read and submit to the Qurʾān and the authentic Sunnah.</li>
-              <li>
-                Affirm what Allah affirmed for Himself; negate any likeness to
-                creation.
-              </li>
-              <li>Avoid Taḥrīf, Taʿṭīl, Takyīf, and Tamthīl.</li>
-            </ul>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <AyahCard
-                tone="indigo"
-                translation="Allah desires to make clear to you…"
-                refText="(An-Nisāʾ 4:26)"
-              />
-              <AyahCard
-                tone="indigo"
-                translation="Allah explains so that you do not go astray…"
-                refText="(An-Nisāʾ 4:176)"
-              />
-              <AyahCard
-                tone="indigo"
-                translation="We have sent down to you the Book to explain everything."
-                refText="(An-Naḥl 16:89)"
-              />
-              <AyahCard
-                tone="indigo"
-                translation="…and who is more truthful in word than Allah?"
-                refText="(An-Nisāʾ 4:122; see also 4:87)"
-              />
-            </div>
-            <p className="mt-3 text-[15px] leading-7 text-slate-800">
-              These texts show that Allah provided sufficient clarity regarding
-              the path to Him — and the greatest need is clarity about Allah
-              Himself, His Names, and His Attributes so that He is worshipped
-              upon clear knowledge.
-            </p>
-          </div>
-        </SoftCard>
-        {/* =========================================================
-   CHUNK 5 — Method of the Salaf • Istiwāʾ • Descent ḥadīth • Duty
-   Paste this block right after CHUNK 4, still inside <main>.
-   ========================================================= */}
-
-        <SoftCard tone="rose" className="p-5 mt-10">
-          <div className="flex items-center gap-2">
-            <Pill tone="rose">Methodology</Pill>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">
-              Hold back from “how?” and “why?” — the Way of the Salaf
-            </h3>
-          </div>
-
-          <p className="mt-3 text-[15px] leading-7 text-slate-800">
-            One must not transgress bounds by asking about the <em>how-ness</em>{" "}
-            (<strong>takyīf</strong>) or attempting likeness (
-            <strong>tamthīl</strong>) of Allah’s Attributes. If a person cannot
-            fully comprehend his own self, he is even further from encompassing
-            the reality of the Creator’s Attributes. Our path:{" "}
-            <strong>affirm</strong> what Allah affirmed, <strong>negate</strong>{" "}
-            any likeness, and <strong>submit</strong> without delving into
-            modality.
-          </p>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <AyahCard
-              tone="rose"
-              arabic="لَيْسَ كَمِثْلِهِ شَيْءٌ"
-              translation="There is nothing whatever like unto Him."
-              refText="(Ash-Shūrā 42:11)"
-            />
-            <AyahCard
-              tone="rose"
-              arabic="وَلَا يُحِيطُونَ بِهِ عِلْمًا"
-              translation="…but they cannot compass Him with their knowledge."
-              refText="(Ṭāhā 20:110)"
-            />
-          </div>
-        </SoftCard>
-
-        <SoftCard tone="indigo" className="p-5 mt-6">
-          <div className="flex items-center gap-2">
-            <Pill tone="indigo">Statement of Imām Mālik</Pill>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">
-              On al-Istiwāʾ
-            </h3>
-          </div>
-
-          <div className="mt-3 rounded-2xl border border-indigo-300 bg-gradient-to-br from-indigo-50 to-white p-5">
-            <p
-              dir="rtl"
-              lang="ar"
-              className="text-2xl leading-relaxed font-semibold text-indigo-900"
+    <Card
+      id={id}
+      className={cx(
+        t.border,
+        "relative overflow-hidden ring-1 ring-black/5",
+        "bg-gradient-to-br",
+        t.soft
+      )}
+    >
+      <div
+        className={cx("absolute inset-x-0 top-0 h-1.5", t.bar)}
+        aria-hidden
+      />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-extrabold text-slate-900">
+            <span
+              className={cx(
+                "inline-flex items-center rounded-lg px-2.5 py-1 text-sm font-bold",
+                t.badge
+              )}
             >
-              الرَّحْمَٰنُ عَلَى الْعَرْشِ اسْتَوَى
+              {title}
+            </span>
+          </h2>
+          {subtitle && (
+            <p className="mt-1 text-sm font-medium text-slate-700">
+              {subtitle}
             </p>
-            <div className="mt-3 text-[15px] leading-7 text-slate-800">
-              <p>
-                <strong>Imām Mālik (رحمه الله)</strong> said: “
-                <em>al-Istiwāʾ</em> is known; its ‘how’ is unknown; belief in it
-                is obligatory; and asking about it is innovation. I consider you
-                an innovator.” This is the way of the Salaf:{" "}
-                <strong>affirm without takyīf or tamthīl</strong>.
-              </p>
-            </div>
-          </div>
-        </SoftCard>
-
-        <SoftCard tone="sky" className="p-5 mt-6">
-          <div className="flex items-center gap-2">
-            <Pill tone="sky">Hadīth Clarification</Pill>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">
-              Allah’s Descent in the Last Third of the Night
-            </h3>
-          </div>
-
-          <p className="mt-3 text-[15px] leading-7 text-slate-800">
-            Some imagine this implies that Allah remains in the worldly heaven
-            throughout the entire global night because of time-zones. The
-            Companions never understood it that way; had such a reading been
-            intended, Allah or His Messenger ﷺ would have clarified it
-            explicitly.
-          </p>
-
-          <ul className="mt-3 list-disc pl-5 text-[15px] leading-7 text-slate-800">
-            <li>
-              Ahl as-Sunnah affirm the descent{" "}
-              <em>in a manner befitting His Majesty</em> — without asking how
-              and without likeness.
-            </li>
-            <li>
-              The descent occurs during the{" "}
-              <strong>last third of the night in each locality</strong>; it is
-              not a single continuous “global” presence.
-            </li>
-            <li>
-              The descent <strong>ends at Fajr</strong> for that locality. There
-              is no contradiction with{" "}
-              <em>“There is nothing like unto Him.”</em> (42:11)
-            </li>
-          </ul>
-
-          <div className="mt-4">
-            <AyahCard
-              tone="sky"
-              arabic="لَيْسَ كَمِثْلِهِ شَيْءٌ وَهُوَ السَّمِيعُ الْبَصِيرُ"
-              translation="There is nothing whatever like unto Him, and He is the All-Hearing, the All-Seeing."
-              refText="(Ash-Shūrā 42:11)"
-            />
-          </div>
-        </SoftCard>
-
-        <SoftCard tone="emerald" className="p-5 mt-6">
-          <div className="flex items-center gap-2">
-            <Pill tone="emerald">Our Duty</Pill>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">
-              Submission, Worship, and Purpose
-            </h3>
-          </div>
-
-          <p className="mt-3 text-[15px] leading-7 text-slate-800">
-            Our stance is to say:{" "}
-            <strong>We hear, we obey, we follow, and we believe</strong>. Do not
-            go beyond the Qurʾān and authentic ḥadīth. Worship is built on
-            clarity regarding Allah’s perfection, not speculative how-ness.
-          </p>
-
-          <div className="mt-4">
-            <AyahCard
-              tone="emerald"
-              arabic="وَمَا خَلَقْتُ الْجِنَّ وَالْإِنسَ إِلَّا لِيَعْبُدُونِ"
-              translation="And I have not created the jinn and the men except that they may worship Me."
-              refText="(Adh-Dhāriyāt 51:56)"
-            />
-          </div>
-        </SoftCard>
-
-        {/* -------------- CHUNK 5 end.
-    You now have the full article content rendered across vibrant sections.
-    If you want, I can add a compact “Key Takeaways” box or a printable summary.
-   ----------------------------------------------------------- */}
-
-        {/* ===================== INSERT NEXT CHUNKS ABOVE THIS LINE ===================== */}
-      </main>
-
-      {/* Footer */}
-      <footer className="mt-10 border-t border-slate-200/80 bg-white/80">
-        <div className="mx-auto max-w-6xl px-6 py-8 text-center text-sm text-slate-700">
-          © {new Date().getFullYear()} Bayt Al Rihla
+          )}
         </div>
-      </footer>
+      </div>
+      <div className="mt-4 space-y-4 leading-7 text-slate-800">{children}</div>
+    </Card>
+  );
+}
+
+function Verse({ arabic, children, tone = "emerald" }) {
+  const t = TONES[tone] || TONES.emerald;
+  return (
+    <div
+      className={cx(
+        "rounded-xl border bg-white/70 p-3 shadow-sm",
+        t.border.replace("/70", "")
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={cx(
+            "rounded-lg p-2 text-white shadow-md bg-gradient-to-br",
+            t.icon
+          )}
+        >
+          <ScrollText className="h-4 w-4" aria-hidden="true" />
+        </div>
+        <div className="flex-1">
+          <p
+            dir="rtl"
+            className="text-lg font-semibold leading-8 text-slate-900"
+          >
+            {arabic}
+          </p>
+          {children && (
+            <p className="mt-2 text-sm text-slate-700">{children}</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-/* =========================================================
-   QUIZ BLOCK — Categories of Tawḥīd (30 Qs)
-   - Paste inside this file (outside your main article layout)
-   - Requires: SoftCard, Pill, AyahCard helpers (already on page)
-   - Toggles by ?quiz=1 (uses useSearchParams above)
-   ========================================================= */
+/* Highlight: for key definitions/lines inside the article text (no content removed) */
+function HL({ children, tone = "amber" }) {
+  const tones = {
+    amber: "bg-amber-100/80 text-amber-900 ring-1 ring-amber-200",
+    sky: "bg-sky-100/80 text-sky-900 ring-1 ring-sky-200",
+    emerald: "bg-emerald-100/80 text-emerald-900 ring-1 ring-emerald-200",
+    rose: "bg-rose-100/80 text-rose-900 ring-1 ring-rose-200",
+    indigo: "bg-indigo-100/80 text-indigo-900 ring-1 ring-indigo-200",
+  };
+  return (
+    <mark className={cx("rounded px-1.5 py-0.5 font-semibold", tones[tone])}>
+      {children}
+    </mark>
+  );
+}
 
-// ------------- Question data -------------
-const KTT02_QUESTIONS = [
+/* Soft callout boxes to draw attention without adding/removing text meaning */
+function Callout({ icon, tone = "emerald", children }) {
+  const border = {
+    emerald: "border-emerald-300 bg-emerald-50",
+    amber: "border-amber-300 bg-amber-50",
+    sky: "border-sky-300 bg-sky-50",
+    indigo: "border-indigo-300 bg-indigo-50",
+    rose: "border-rose-300 bg-rose-50",
+  }[tone];
+  const Icon = icon || Lightbulb;
+  return (
+    <div className={cx("rounded-xl border p-3 text-sm leading-7", border)}>
+      <div className="mb-1 flex items-center gap-2 font-bold">
+        <Icon className="h-4 w-4" /> Study Tip
+      </div>
+      <div className="text-slate-800">{children}</div>
+    </div>
+  );
+}
+
+/* ------------------------------ Question Bank ----------------------------- */
+const QUESTIONS = [
   {
     id: 1,
-    q: "Tawḥīd ar-Rubūbiyyah means singling Allah out in which of the following?",
-    choices: [
-      "Creation only",
-      "Ownership only",
-      "Control only",
-      "Creation, ownership, and control",
+    prompt: "What is Tawḥīd ar-Rubūbiyyah as defined in the text?",
+    options: [
+      "Singling out Allah with creation, ownership and control.",
+      "Singling out Allah with worship alone.",
+      "Affirming Allah's Names and Attributes only.",
+      "Believing angels control affairs by His leave.",
     ],
-    a: 3,
-    exp: "Rubūbiyyah covers all three: creation, ownership and control (tadbīr).",
+    answerIndex: 0,
+    explanation:
+      "Rubūbiyyah is to single out Allah the Mighty and Sublime with creation, ownership and control (creation, mulk, tadbīr).",
   },
   {
     id: 2,
-    q: "“Surely His is the creation and commandment” is from which sūrah/āyah?",
-    choices: [
-      "Al-Aʿrāf 7:54",
-      "Fāṭir 35:3",
-      "Al-Muʾminūn 23:14",
-      "Yūnus 10:31",
+    prompt: "What does 'singling out Allah with creation' entail?",
+    options: [
+      "That humans cannot build anything.",
+      "That there is no Creator except Allah, while human 'creation' is mere transformation.",
+      "That artists create from nothing.",
+      "That angels share creation.",
     ],
-    a: 0,
-    exp: "Al-Aʿrāf 7:54 indicates ḥaṣr (restriction): predicate brought forward restricts creation/command to Allah.",
+    answerIndex: 1,
+    explanation:
+      "Real creation (from nothing) is exclusive to Allah. Human 'creating' like picture-making is a limited transformation.",
   },
   {
     id: 3,
-    q: "“Is there any creator other than Allah who provides for you from the sky and the earth?”",
-    choices: [
-      "Al-Muʾminūn 23:88",
-      "Fāṭir 35:3",
-      "Az-Zukhruf 43:9",
-      "Yūnus 10:32",
+    prompt:
+      "How is the verse 'Blessed is Allah, the best of creators' understood?",
+    options: [
+      "It contradicts exclusivity of creation.",
+      "It proves multiple equal creators.",
+      "It does not contradict exclusivity because human 'creation' is not ex nihilo.",
+      "It is abrogated.",
     ],
-    a: 1,
-    exp: "Fāṭir 35:3 poses a challenge, proving creation is exclusive to Allah.",
+    answerIndex: 2,
+    explanation:
+      "The phrase recognizes limited making (taṣwīr/taḥwīl), not creating from nothing.",
   },
   {
     id: 4,
-    q: "“Blessed is Allah, the best of creators” (23:14) means human 'creation' is:",
-    choices: [
-      "Equal to Allah’s creation",
-      "Bringing from nothing",
-      "Only transforming forms (limited)",
-      "Independent origination",
+    prompt:
+      "How does the text contrast Allah’s ownership with human ownership?",
+    options: [
+      "Both are absolute and identical.",
+      "Human ownership is comprehensive but Allah's is restricted.",
+      "Human ownership is restricted and defective; Allah's ownership is general and perfect.",
+      "Neither owns anything in reality.",
     ],
-    a: 2,
-    exp: "Humans only transform; real creation is bringing into existence from nothing. See hadīth of image-makers.",
+    answerIndex: 2,
+    explanation:
+      "Allah’s dominion is perfect (3:189; 23:88); human ownership is narrow and regulated by Sharīʿah.",
   },
   {
     id: 5,
-    q: "Human ownership in Sharīʿah texts is best described as:",
-    choices: [
-      "Absolute and unrestricted",
-      "Restricted, defective, and conditional",
-      "Equal to Allah’s ownership",
-      "Irrelevant",
+    prompt: "What is intended by singling out Allah with control (tadbīr)?",
+    options: [
+      "Only prophets control affairs.",
+      "No one disposes affairs except Allah alone, as in Yūnus 31–32.",
+      "Humans control all outcomes by effort.",
+      "Saints share cosmic control.",
     ],
-    a: 1,
-    exp: "Texts like 23:6 and 24:61 show that human ownership is limited and regulated by Sharīʿah.",
+    answerIndex: 1,
+    explanation:
+      "Provision, senses, life from death, and disposing of affairs belong to Allah alone.",
   },
   {
     id: 6,
-    q: "“Allah’s is the dominion of the heavens and the earth” is from:",
-    choices: [
-      "Āl ʿImrān 3:189",
-      "Al-Baqarah 2:21",
-      "Al-Fātiḥah 1:1",
-      "An-Nūr 24:61",
+    prompt: "Did the pagans generally deny Rubūbiyyah?",
+    options: [
+      "Yes, most denied it outright.",
+      "No; they affirmed Allah as Creator/Disposer, with Firʿawn a notable rejecter out of arrogance.",
+      "They believed in two equal creators.",
+      "They considered the universe ownerless.",
     ],
-    a: 0,
-    exp: "Āl ʿImrān 3:189 establishes exclusive dominion for Allah.",
+    answerIndex: 1,
+    explanation:
+      "They would answer 'Allah' (43:9). Firʿawn denied despite inner certainty (27:14; 17:102).",
   },
   {
     id: 7,
-    q: "Which āyah enumerates: Provider, Owner of hearing and sight, Bringer of life/death, and Disposer of affairs?",
-    choices: [
-      "Yūnus 10:31–32",
-      "Az-Zukhruf 43:9",
-      "Al-Aʿrāf 7:54",
-      "Fāṭir 35:3",
+    prompt: "Summarize the rational proof from 23:91 for one Creator.",
+    options: [
+      "Multiple gods would cooperate harmoniously forever.",
+      "Each would take away what he created, or one would overpower the others—negating true Lordship.",
+      "The gods would merge.",
+      "Creation would stop existing.",
     ],
-    a: 0,
-    exp: "Yūnus 10:31–32 concludes: “That is Allah, your Lord in truth.”",
+    answerIndex: 1,
+    explanation:
+      "Multiplicity implies division or domination; either way, no true co-Lordship.",
   },
   {
     id: 8,
-    q: "Pagans at the Prophet’s time typically:",
-    choices: [
-      "Denied any Creator exists",
-      "Admitted Allah created but associated partners in worship",
-      "Worshipped Allah alone",
-      "Believed in many creators equally",
+    prompt: "Define Tawḥīd al-Ulūhiyyah / al-ʿIbādah.",
+    options: [
+      "Singling out Allah with Names and Attributes.",
+      "Singling out Allah with worship, acting upon His commands out of love and reverence.",
+      "Believing messengers are divine.",
+      "Affirming that humans control destiny.",
     ],
-    a: 1,
-    exp: "They admitted Rubūbiyyah (e.g., 43:9) but rejected Ulūhiyyah; messengers disputed them about worship.",
+    answerIndex: 1,
+    explanation:
+      "ʿIbādah = doing what Allah loves of words/deeds, outward and inward.",
   },
   {
     id: 9,
-    q: "Firʿawn’s rejection of Rubūbiyyah was due to:",
-    choices: [
-      "Ignorance of the signs",
-      "Arrogance despite knowing (27:14)",
-      "Lack of evidence",
-      "A misunderstanding of language",
+    prompt: "Why did messengers chiefly emphasize Ulūhiyyah?",
+    options: [
+      "Because most people already worshipped correctly.",
+      "Because most denied Rubūbiyyah only.",
+      "Because most associated partners in worship; hence books and messengers were sent.",
+      "Because Names and Attributes were easy to grasp.",
     ],
-    a: 1,
-    exp: "Allah says they denied out of arrogance while their souls were convinced (An-Naml 27:14).",
+    answerIndex: 2,
+    explanation:
+      "See Anbiyāʾ 25; the ḥadīth shows few followers despite the call to exclusive worship.",
   },
   {
     id: 10,
-    q: "Identify the āyah: “I am your Lord, the Most Exalted.”",
-    choices: [
-      "Al-Qasas 28:38",
-      "An-Nāziʿāt 79:24",
-      "Al-Isrāʾ 17:102",
-      "Al-Muʾminūn 23:88",
+    prompt:
+      "What are the two pillars of Tawḥīd al-Asmāʾ waṣ-Ṣifāt and the four prohibitions?",
+    options: [
+      "Affirmation & likeness; prohibited: tahrīf, taʿṭīl, takyīf, tamthīl.",
+      "Affirmation & negation of likeness; prohibited: taḥrīf, taʿṭīl, takyīf, tamthīl.",
+      "Negation & likeness; prohibited: taʿṭīl only.",
+      "Affirmation only; no prohibitions.",
     ],
-    a: 1,
-    exp: "An-Nāziʿāt 79:24 quotes Firʿawn’s arrogance.",
-  },
-  {
-    id: 11,
-    q: "Rational proof in 23:91 shows that if there were many gods:",
-    choices: [
-      "They would cooperate perfectly",
-      "Each would take what he created and overpower others, or all would be weak",
-      "Creation would be better",
-      "Morality would be relative",
-    ],
-    a: 1,
-    exp: "Either one dominates (so he alone is Lord) or none can (so all are incapable). Hence, only One True Lord.",
-  },
-  {
-    id: 12,
-    q: "Tawḥīd al-Ulūhiyyah means:",
-    choices: [
-      "Singling Allah out with all acts of worship",
-      "Acknowledging Allah created the heavens and earth",
-      "Believing in angels",
-      "Affirming Qadar only",
-    ],
-    a: 0,
-    exp: "Ulūhiyyah/al-ʿIbādah is directing all devotion to Allah alone (31:30; 17:22; 2:21).",
-  },
-  {
-    id: 13,
-    q: "Which āyah states: “O mankind! Worship your Lord who created you…”?",
-    choices: [
-      "Al-Baqarah 2:21",
-      "Al-Fātiḥah 1:1",
-      "Āl ʿImrān 3:189",
-      "Al-Isrāʾ 17:22",
-    ],
-    a: 0,
-    exp: "Al-Baqarah 2:21 ties obligation to worship with the cause of creation by Allah.",
-  },
-  {
-    id: 14,
-    q: "Meaning of al-ʿIbādah per Ibn Taymiyyah:",
-    choices: [
-      "Only ritual acts",
-      "An inclusive term for all that Allah loves and is pleased with—sayings and deeds, outward and inward",
-      "Only inward acts",
-      "Only outward acts",
-    ],
-    a: 1,
-    exp: "Worship includes all that Allah loves and is pleased with; sayings/deeds, outward/inward.",
-  },
-  {
-    id: 15,
-    q: "Ṣalāh (prayer) in relation to ʿIbādah is:",
-    choices: [
-      "Only the means of worship",
-      "Only worship itself",
-      "Both worship itself and a means by which worship is performed",
-      "Neither",
-    ],
-    a: 2,
-    exp: "It is an act of worship and also a vehicle of worship.",
-  },
-  {
-    id: 16,
-    q: "Refutation of worshipping the dead includes that the dead:",
-    choices: [
-      "Can grant benefit independently",
-      "Control provisions",
-      "Cannot benefit/harm themselves, let alone others",
-      "Know the unseen",
-    ],
-    a: 2,
-    exp: "The dead are in need of your duʿāʾ; calling upon them is irrational and unscriptural.",
-  },
-  {
-    id: 17,
-    q: "Messengers were sent primarily to call people to:",
-    choices: [
-      "Acknowledge a Creator",
-      "Social reform",
-      "Worship Allah alone and avoid ṭāghūt",
-      "Political unity",
-    ],
-    a: 2,
-    exp: "Al-Anbiyāʾ 21:25: “None has the right to be worshipped but I, so worship Me.”",
-  },
-  {
-    id: 18,
-    q: "The ḥadīth about some prophets having only a few or no followers indicates:",
-    choices: [
-      "Prophethood can fail",
-      "People often rejected Tawḥīd al-Ulūhiyyah",
-      "Numbers determine truth",
-      "They lacked miracles",
-    ],
-    a: 1,
-    exp: "Bukhārī/Muslim; many nations rejected exclusive worship despite proofs.",
-  },
-  {
-    id: 19,
-    q: "Tawḥīd al-Asmāʾ waṣ-Ṣifāt obligates two things:",
-    choices: [
-      "Taʿṭīl and Tamthīl",
-      "Affirmation of what Allah affirmed and negation of likeness",
-      "Takyīf and Taḥrīf",
-      "Ignoring the texts",
-    ],
-    a: 1,
-    exp: "Ahl as-Sunnah affirm without distortion and deny any likeness to creation (42:11).",
-  },
-  {
-    id: 20,
-    q: "“There is nothing like unto Him, and He is the All-Hearing, the All-Seeing” is:",
-    choices: ["Ṭāhā 20:5", "Fāṭir 35:10", "Ash-Shūrā 42:11", "An-Nūr 24:61"],
-    a: 2,
-    exp: "Ash-Shūrā 42:11 anchors both tanzīh (no likeness) and ithbāt (affirmation of attributes).",
-  },
-  {
-    id: 21,
-    q: "Which of the following is NOT among the four errors Ahl as-Sunnah avoid?",
-    choices: ["Taḥrīf", "Taʿṭīl", "Takyīf", "Tafsīr"],
-    a: 3,
-    exp: "The four to avoid are Taḥrīf, Taʿṭīl, Takyīf, and Tamthīl.",
-  },
-  {
-    id: 22,
-    q: "Imām Mālik’s principle regarding Istiwāʾ includes:",
-    choices: [
-      "The how is known",
-      "Asking how is innovation; belief is obligatory; the how is unknown",
-      "Deny the attribute",
-      "Interpret it metaphorically only",
-    ],
-    a: 1,
-    exp: "“Al-Istiwāʾ is known; its how is unknown; belief is obligatory; asking about it is innovation.”",
-  },
-  {
-    id: 23,
-    q: "Correct stance on the ḥadīth of Allah’s descent in the last third of the night:",
-    choices: [
-      "He remains in the worldly heaven all night globally",
-      "It contradicts 42:11",
-      "He descends in a manner befitting His Majesty; descent ends at Fajr in each locality",
-      "It must be rejected",
-    ],
-    a: 2,
-    exp: "Affirm without asking how; locality-based last third resolves timing; ends at Fajr.",
-  },
-  {
-    id: 24,
-    q: "“He settled firmly over the Throne” and “Unto Him ascend pure words” teach:",
-    choices: [
-      "Negation only",
-      "Affirmation only",
-      "Affirmation of attributes/actions befitting His Majesty",
-      "Pure metaphor",
-    ],
-    a: 2,
-    exp: "Examples of ithbāt without takyīf or tamthīl (Ṭāhā 20:5; Fāṭir 35:10).",
-  },
-  {
-    id: 25,
-    q: "“Do not set up another god with Allah” refers to:",
-    choices: [
-      "Al-Isrāʾ 17:22",
-      "Al-Fātiḥah 1:1",
-      "Āl ʿImrān 3:189",
-      "An-Nisāʾ 4:26",
-    ],
-    a: 0,
-    exp: "A direct prohibition of shirk in worship.",
-  },
-  {
-    id: 26,
-    q: "Fire-worshippers’ claim of two creators fails because:",
-    choices: [
-      "Darkness is mere absence, not a rival existent; light’s superiority undercuts dualism",
-      "Darkness is stronger",
-      "The Qurʾān never addresses it",
-      "All polytheism is equally valid",
-    ],
-    a: 0,
-    exp: "Reason and revelation refute dualism; darkness is non-existence, not a co-eternal rival.",
-  },
-  {
-    id: 27,
-    q: "“All praise is due to Allah, Lord of the worlds” (1:1) supports:",
-    choices: [
-      "Rubūbiyyah only",
-      "Ulūhiyyah only",
-      "That the Lord of all is the One to be worshipped",
-      "None",
-    ],
-    a: 2,
-    exp: "The One Who is Rabb of all deserves all ḥamd and exclusive worship.",
-  },
-  {
-    id: 28,
-    q: "“Say: In whose hand is the sovereignty of everything?” is from:",
-    choices: [
-      "Al-Muʾminūn 23:88",
-      "Az-Zukhruf 43:9",
-      "Fāṭir 35:3",
-      "Al-Baqarah 2:21",
-    ],
-    a: 0,
-    exp: "A proof of exclusive mulk (ownership/sovereignty) for Allah.",
-  },
-  {
-    id: 29,
-    q: "Why is worshipping created things irrational per the article?",
-    choices: [
-      "Because they perish, cannot benefit/harm, nor sustain or extend life",
-      "Because they are beautiful",
-      "Because people dislike it",
-      "Because it is traditional",
-    ],
-    a: 0,
-    exp: "Only the Creator sustains and controls; the created are needy and perishing.",
-  },
-  {
-    id: 30,
-    q: "A concise way Salafiyyah frames the method in Names & Attributes:",
-    choices: [
-      "Deny all attributes to avoid likeness",
-      "Affirm what Allah affirmed, negate what He negated, without Taḥrīf, Taʿṭīl, Takyīf, or Tamthīl",
-      "Interpret everything figuratively",
-      "Suspend judgment entirely",
-    ],
-    a: 1,
-    exp: "Balanced path of Ahl as-Sunnah; see 42:11 and statements from the Salaf like Imām Mālik.",
+    answerIndex: 1,
+    explanation:
+      "Affirm what Allah affirmed; deny likeness (42:11); avoid taḥrīf, taʿṭīl, takyīf, and tamthīl.",
   },
 ];
 
-// ------------- Quiz UI -------------
-function KTT02_QuizView({ onBack }) {
-  const questions = useMemo(() => KTT02_QUESTIONS, []);
-  const [idx, setIdx] = useState(0);
+function Question({ q }) {
   const [selected, setSelected] = useState(null);
-  const [answered, setAnswered] = useState(false);
-  const [score, setScore] = useState(0);
-  const [record, setRecord] = useState([]); // {id, correct, selected}
-  const [startTime] = useState(Date.now());
-  const [showReview, setShowReview] = useState(false);
-
-  const q = questions[idx];
-
-  const submit = () => {
-    if (selected == null) return;
-    const correct = selected === q.a;
-    setAnswered(true);
-    setRecord((r) => [...r, { id: q.id, correct, selected }]);
-    if (correct) setScore((s) => s + 1);
-  };
-
-  const next = () => {
-    setSelected(null);
-    setAnswered(false);
-    if (idx + 1 < questions.length) setIdx((i) => i + 1);
-  };
-
-  const finished = idx === questions.length - 1 && answered;
-  const totalMs = Date.now() - startTime;
-
-  if (finished) {
-    const percent = Math.round((score / questions.length) * 100);
-    return (
-      <div className="space-y-6">
-        <div className="rounded-3xl border border-emerald-400 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="h-1.5 w-24 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 drop-shadow" />
-              <h2 className="mt-2 text-2xl md:text-3xl font-black tracking-tight text-slate-900">
-                Quiz Completed — Your Results
-              </h2>
-            </div>
-            <div className="text-right">
-              <div className="text-sm font-extrabold text-slate-700 flex items-center gap-2 justify-end">
-                <Timer className="h-4 w-4 text-slate-600" />
-                {(totalMs / 1000).toFixed(1)}s
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4">
-              <div className="text-xs font-bold uppercase tracking-wide text-emerald-800">
-                Correct
-              </div>
-              <div className="mt-1 text-3xl font-black text-emerald-700">
-                {score}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4">
-              <div className="text-xs font-bold uppercase tracking-wide text-rose-800">
-                Incorrect
-              </div>
-              <div className="mt-1 text-3xl font-black text-rose-700">
-                {questions.length - score}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
-              <div className="text-xs font-bold uppercase tracking-wide text-amber-800">
-                Percentage
-              </div>
-              <div className="mt-1 text-3xl font-black text-amber-700">
-                {percent}%
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              onClick={() => setShowReview(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-extrabold text-white shadow-md hover:bg-indigo-700"
-            >
-              Review Answers
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white shadow-md hover:bg-emerald-700"
-            >
-              Retry Quiz
-            </button>
-            <button
-              onClick={onBack}
-              className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-extrabold text-white shadow-md hover:bg-rose-700"
-            >
-              Back to Article
-            </button>
-          </div>
-        </div>
-
-        {showReview && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
-              Review
-            </p>
-            <ol className="mt-3 space-y-3">
-              {questions.map((qq, i) => {
-                const rec = record[i];
-                return (
-                  <li
-                    key={qq.id}
-                    className="rounded-xl border border-slate-200 p-3"
-                  >
-                    <div className="flex items-start gap-2">
-                      {rec?.correct ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600 mt-0.5" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-rose-600 mt-0.5" />
-                      )}
-                      <div>
-                        <p className="font-semibold">
-                          {i + 1}. {qq.q}
-                        </p>
-                        <div className="mt-1 text-sm">
-                          <div>
-                            <span className="font-semibold">Your answer:</span>{" "}
-                            {qq.choices[rec?.selected] ?? "—"}
-                          </div>
-                          <div>
-                            <span className="font-semibold">
-                              Correct answer:
-                            </span>{" "}
-                            {qq.choices[qq.a]}
-                          </div>
-                          <div className="mt-2 text-slate-700">{qq.exp}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const [revealed, setRevealed] = useState(false);
+  const correct = selected === q.answerIndex;
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-indigo-400 bg-gradient-to-br from-indigo-50 to-white p-6 shadow-md">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="h-1.5 w-24 rounded-full bg-gradient-to-r from-indigo-500 to-violet-400 drop-shadow" />
-            <h2 className="mt-2 text-2xl md:text-3xl font-black tracking-tight text-slate-900">
-              Categories of Tawḥīd — 30-Question Bank
-            </h2>
-          </div>
-          <div className="text-right">
-            <div className="text-xs font-extrabold text-slate-600">
-              Question <span className="text-indigo-700">{idx + 1}</span> /{" "}
-              {questions.length}
-            </div>
-          </div>
+    <Card className="border-emerald-200/70">
+      <div className="flex items-start gap-3">
+        <div className="rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-2 text-white shadow-md">
+          <HelpCircle className="h-5 w-5" aria-hidden="true" />
         </div>
-
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="flex items-start gap-2">
-            <HelpCircle className="h-5 w-5 text-indigo-600 mt-0.5" />
-            <p className="font-semibold text-slate-900">{q.q}</p>
-          </div>
-
+        <div className="flex-1">
+          <p className="font-semibold text-slate-900">{q.prompt}</p>
           <div className="mt-3 grid gap-2">
-            {q.choices.map((c, i) => {
-              const isSelected = selected === i;
-              const isCorrect = answered && i === q.a;
-              const isWrong = answered && isSelected && i !== q.a;
+            {q.options.map((opt, idx) => {
+              const isSelected = selected === idx;
+              const isCorrect = q.answerIndex === idx;
+              const showState = revealed && (isSelected || isCorrect);
               return (
                 <button
-                  key={i}
-                  disabled={answered}
-                  onClick={() => setSelected(i)}
-                  className={[
-                    "text-left rounded-xl border px-3 py-2 text-sm font-semibold transition",
-                    isCorrect
-                      ? "border-emerald-500 bg-emerald-50"
-                      : isWrong
-                      ? "border-rose-500 bg-rose-50"
-                      : isSelected
-                      ? "border-indigo-500 bg-indigo-50"
-                      : "border-slate-200 bg-white hover:border-indigo-300",
-                  ].join(" ")}
+                  key={idx}
+                  type="button"
+                  onClick={() => !revealed && setSelected(idx)}
+                  className={cx(
+                    "flex w-full items-center justify-between rounded-xl border bg-white px-4 py-2 text-left text-sm shadow-sm transition",
+                    isSelected ? "border-emerald-400" : "border-slate-200",
+                    revealed && isCorrect && "bg-emerald-50",
+                    revealed && isSelected && !isCorrect && "bg-rose-50",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  )}
                 >
-                  {c}
+                  <span className="pr-3 text-slate-800">{opt}</span>
+                  {showState &&
+                    (isCorrect ? (
+                      <CheckCircle2
+                        className="h-5 w-5 text-emerald-600"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <XCircle
+                        className="h-5 w-5 text-rose-500"
+                        aria-hidden="true"
+                      />
+                    ))}
                 </button>
               );
             })}
           </div>
 
-          {!answered ? (
-            <div className="mt-4 flex items-center gap-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {!revealed ? (
               <button
-                onClick={submit}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-extrabold text-white shadow-md hover:bg-indigo-700"
+                disabled={selected === null}
+                onClick={() => setRevealed(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3 py-1.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Submit
+                Reveal answer
               </button>
-              <button
-                onClick={onBack}
-                className="text-sm font-semibold text-slate-600 hover:text-rose-600"
-              >
-                Back to Article
-              </button>
-            </div>
-          ) : (
-            <div className="mt-4">
-              <SoftCard tone="emerald" className="p-4">
-                <div className="text-[15px] leading-7 text-slate-800">
-                  <p className="font-semibold">Explanation</p>
-                  <p className="mt-1">{q.exp}</p>
-                </div>
-              </SoftCard>
-              <div className="mt-3 flex items-center gap-3">
-                <button
-                  onClick={next}
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-extrabold text-white shadow-md hover:bg-indigo-700"
+            ) : (
+              <>
+                <span
+                  className={cx(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold",
+                    correct
+                      ? "border-emerald-500/60 bg-emerald-100 text-emerald-900"
+                      : "border-rose-500/60 bg-rose-100 text-rose-900"
+                  )}
                 >
-                  Next
-                </button>
+                  {correct ? "Correct" : "Not quite"}
+                </span>
                 <button
-                  onClick={onBack}
-                  className="text-sm font-semibold text-slate-600 hover:text-rose-600"
+                  onClick={() => {
+                    setSelected(null);
+                    setRevealed(false);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50"
                 >
-                  Back to Article
+                  Try again
                 </button>
-              </div>
+              </>
+            )}
+          </div>
+
+          {revealed && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <p className="font-semibold">Explanation</p>
+              <p className="mt-1 leading-7">{q.explanation}</p>
             </div>
           )}
         </div>
       </div>
-
-      {/* Quick progress pills */}
-      <div className="flex flex-wrap gap-1">
-        {questions.map((_, i) => {
-          const done = i < record.length;
-          const correct = record[i]?.correct;
-          return (
-            <span
-              key={i}
-              className={[
-                "inline-flex h-2 w-4 rounded-full",
-                done
-                  ? correct
-                    ? "bg-emerald-500"
-                    : "bg-rose-500"
-                  : "bg-slate-300",
-              ].join(" ")}
-              title={`Q${i + 1}`}
-            />
-          );
-        })}
-      </div>
-    </div>
+    </Card>
   );
 }
 
-// ------------- Quiz-mode switch -------------
-function KTT02_QuizScreen({ setSearchParams }) {
+function QuestionBank() {
+  const reduce = useReducedMotion();
   return (
-    <div className="min-h-screen bg-[radial-gradient(1200px_600px_at_10%_-10%,rgba(99,102,241,0.25),transparent),radial-gradient(900px_500px_at_90%_-10%,rgba(16,185,129,0.25),transparent)]">
-      <header className="mx-auto max-w-6xl px-6 pt-10 pb-6">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setSearchParams({})}
-            className="inline-flex items-center gap-2 text-sm text-slate-700 hover:text-emerald-800"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back to article
-          </button>
-          <div className="flex items-center gap-2 text-emerald-900">
-            <BookOpen className="h-5 w-5" />
-            <span className="text-sm font-bold">Bayt Al Rihla • Aqīdah</span>
-          </div>
+    <section id="bank" className="mx-auto max-w-7xl px-6 pb-16">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0 } : { duration: 0.35 }}
+        className="mb-6 flex items-center justify-between"
+      >
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+            Question Bank
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Answer each question, then reveal the correct answer and
+            explanation.
+          </p>
         </div>
-        <div className="mt-4">
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">
-            Kitāb at-Tawḥīd — The Three Categories{" "}
-            <span className="ml-2 rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-extrabold text-white">
-              Quiz Mode
-            </span>
-          </h1>
+        <Pill tone="sky">
+          <ListChecks className="h-3.5 w-3.5" aria-hidden="true" /> 10 questions
+        </Pill>
+      </motion.div>
+
+      <div className="grid grid-cols-1 gap-4">
+        {QUESTIONS.map((q) => (
+          <Question key={q.id} q={q} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* --------------------------------- Page ---------------------------------- */
+export default function Chapter02_CategoriesOfTawheed() {
+  const reduce = useReducedMotion();
+  const [view, setView] = useState("content"); // 'content' | 'bank'
+
+  const nav = useMemo(
+    () => [
+      { id: "rububiyyah", label: "Rubūbiyyah", tone: "emerald" },
+      { id: "rational", label: "Rational Proofs", tone: "amber" },
+      { id: "uluhiyyah", label: "Ulūhiyyah / ʿIbādah", tone: "sky" },
+      { id: "note", label: "Note", tone: "indigo" },
+      { id: "asma-sifat", label: "Asmāʾ wa Ṣifāt", tone: "rose" },
+    ],
+    []
+  );
+
+  const scrollToId = (id) =>
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-pink-50">
+      {/* Soft glows */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(251,191,36,0.20),rgba(255,255,255,0))]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-40 top-40 -z-10 h-80 w-80 rounded-full bg-gradient-to-br from-rose-200/60 via-pink-200/50 to-amber-200/40 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-40 top-20 -z-10 h-80 w-80 rounded-full bg-gradient-to-br from-amber-200/60 via-orange-200/50 to-rose-200/40 blur-3xl"
+      />
+
+      {/* Header */}
+      <header className="mx-auto max-w-7xl px-6 pt-8 pb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link
+              to="/aqeedah/books/kitab-at-tawhid"
+              className="inline-flex items-center gap-2 text-sm text-slate-700 hover:text-emerald-800"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back to
+              Kitāb at-Tawḥīd
+            </Link>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 text-emerald-900">
+            <Sparkles className="h-5 w-5" aria-hidden="true" />
+            <span className="text-sm font-bold">ʿAqīdah</span>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 pb-20">
-        <KTT02_QuizView onBack={() => setSearchParams({})} />
-      </main>
+      {/* Hero + Mode Toggle */}
+      <section className="mx-auto max-w-7xl px-6 pb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.35 }}
+          className="rounded-3xl border border-white/60 bg-white/70 p-6 sm:p-8 shadow-sm backdrop-blur"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="bg-gradient-to-r from-emerald-700 via-teal-700 to-sky-700 bg-clip-text text-3xl font-black tracking-tight text-transparent sm:text-4xl">
+                Categories of Tawḥīd
+              </h1>
+              <p className="mt-1 text-sm font-medium text-slate-600">
+                تصنيفات التوحيد — learner-friendly layout
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Pill tone="emerald">
+                  <BookOpen className="h-3.5 w-3.5" /> Rubūbiyyah
+                </Pill>
+                <Pill tone="sky">
+                  <ScrollText className="h-3.5 w-3.5" /> Ulūhiyyah / ʿIbādah
+                </Pill>
+                <Pill tone="rose">Asmāʾ wa Ṣifāt</Pill>
+              </div>
+            </div>
 
-      <footer className="mt-10 border-t border-slate-200/80 bg-white/80">
-        <div className="mx-auto max-w-6xl px-6 py-8 text-center text-sm text-slate-700">
-          © {new Date().getFullYear()} Bayt Al Rihla
+            {/* Read / Questions toggle */}
+            <div className="rounded-xl border border-slate-200 bg-white/80 p-1 shadow-sm">
+              <div className="grid grid-cols-2 overflow-hidden rounded-lg">
+                <button
+                  onClick={() => setView("content")}
+                  className={cx(
+                    "px-3 py-1.5 text-xs font-semibold transition",
+                    view === "content"
+                      ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white"
+                      : "text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  Read
+                </button>
+                <button
+                  onClick={() => setView("bank")}
+                  className={cx(
+                    "px-3 py-1.5 text-xs font-semibold transition",
+                    view === "bank"
+                      ? "bg-gradient-to-r from-indigo-600 to-sky-600 text-white"
+                      : "text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  Questions
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Nav (non-sticky, compact chips) */}
+          {view === "content" && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {nav.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => scrollToId(n.id)}
+                  className={cx(
+                    "rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-sm transition",
+                    n.tone === "emerald" &&
+                      "border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100",
+                    n.tone === "amber" &&
+                      "border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100",
+                    n.tone === "sky" &&
+                      "border-sky-200 bg-sky-50 text-sky-950 hover:bg-sky-100",
+                    n.tone === "indigo" &&
+                      "border-indigo-200 bg-indigo-50 text-indigo-950 hover:bg-indigo-100",
+                    n.tone === "rose" &&
+                      "border-rose-200 bg-rose-50 text-rose-950 hover:bg-rose-100"
+                  )}
+                >
+                  {n.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </section>
+
+      {/* Content */}
+      {view === "content" && (
+        <main id="content" className="mx-auto max-w-7xl px-6 pb-16">
+          <section id="content-body" className="mt-6 space-y-6">
+            {/* 1) Rubūbiyyah */}
+            <Section
+              id="rububiyyah"
+              title="The First Category: at-Tawheed ar-Ruboobiyyah"
+              tone="emerald"
+            >
+              <p>
+                <HL tone="emerald">
+                  This is to single out Allah the Mighty and Sublime with
+                  creation, ownership and control.
+                </HL>
+              </p>
+
+              <p>
+                <strong>To single out Allah with creation</strong> is for one to
+                believe that there is no creator except Allah. He, the Exalted
+                says:
+              </p>
+              <Verse
+                tone="emerald"
+                arabic="أَلَا لَهُ الْخَلْقُ وَالْأَمْرُ ۗ تَبَارَكَ اللَّهُ رَبُّ الْعَالَمِينَ"
+              >
+                “Surely His is creation and commandment…” (A’raaf: 54).
+              </Verse>
+              <p>
+                This sentence (in Arabic lexicon) indicates al-hasr
+                (restriction) since the predicate was brought forward because to
+                bring forward what should only come later shows restriction.
+              </p>
+
+              <p>He the Exalted says:</p>
+              <Verse
+                tone="emerald"
+                arabic="هَلْ مِنْ خَالِقٍ غَيْرُ اللَّهِ يَرْزُقُكُمْ مِنَ السَّمَاءِ وَالْأَرْضِ ۚ"
+              >
+                “Is there any creator other than Allah who provides for you from
+                the sky and the earth?” (Faatir: 3).
+              </Verse>
+              <p>
+                <HL tone="amber">
+                  This verse demonstrates that creation is exclusive to Allah
+                  alone because the interrogative came in the sense of
+                  challenge.
+                </HL>{" "}
+                As for what has come (in the texts) which affirms a creator
+                other than Allah as in His saying, the Exalted:
+              </p>
+              <Verse
+                tone="emerald"
+                arabic="فَتَبَارَكَ اللَّهُ أَحْسَنُ الْخَالِقِينَ"
+              >
+                “Blessed is Allah, the best of creators” (Mu’minoon, 14)
+              </Verse>
+              <p>
+                And such as the statement of the Prophet ﷺ regarding
+                picture-makers when they would be told: “bring to life what you
+                have created.” (1) This does not (refer to) real creation. It is
+                not creation from nothingness; rather it is transformation of a
+                thing from one state to the other. In addition, it is not
+                inclusive; it is only restricted to things humankind can
+                manipulate which is very restricted in scope.
+              </p>
+              <p>
+                Therefore, it does not actually contradict our saying:{" "}
+                <HL>
+                  to single out Allah the Mighty and Sublime for creation.
+                </HL>
+              </p>
+
+              <p>
+                <strong>
+                  As for singling out Allah the Mighty and Sublime with
+                  ownership:
+                </strong>{" "}
+                it is to believe that no one owns the creatures except their
+                Creator, as Allah the Exalted says:
+              </p>
+              <Verse
+                tone="emerald"
+                arabic="وَلِلَّهِ مُلْكُ السَّمَاوَاتِ وَالْأَرْضِ"
+              >
+                “Allah’s is the dominion of the heavens and the earth” (Aali
+                Imraan: 189)
+              </Verse>
+              <p>He also says:</p>
+              <Verse
+                tone="emerald"
+                arabic="قُلْ مَنْ بِيَدِهِ مَلَكُوتُ كُلِّ شَيْءٍ"
+              >
+                “Say: in whose hand is the sovereignty of everything (i.e.
+                treasures of each and everything)” (Mu’minoon, 88)
+              </Verse>
+              <p>
+                As regards what has come (in the texts) that affirm ownership
+                for other than Allah such as His saying the Exalted:
+              </p>
+              <Verse
+                tone="emerald"
+                arabic="إِلَّا عَلَىٰ أَزْوَاجِهِمْ أَوْ مَا مَلَكَتْ أَيْمَانُهُمْ"
+              >
+                “Except from their wives or (the captives and slaves) that their
+                right hands possess - for then, they are free of blame.”
+                (al-Mu’minoon: 6)
+              </Verse>
+              <p>And His saying:</p>
+              <Verse tone="emerald" arabic="أَوْ مَا مَلَكْتُمْ مَفَاتِحَهُ">
+                “Or from that whereof you possess its keys” (Noor: 61),
+              </Verse>
+              <p>
+                These texts only refer to{" "}
+                <HL tone="sky">restricted ownership</HL> which only covers a
+                very small aspect of creation. (For example), a man can only own
+                what he possesses and not what belongs to someone else. As such,
+                it is a defective ownership in its attribute. Also, one may not
+                have full control over what he possesses, and for that reason,
+                he may not use them except as he is permitted according to the
+                Sharee’ah. For example, if he intends to burn his property or
+                punish his animal, we would say: ‘it is not permissible’.
+                However, Allah Glorious is He, generally and perfectly owns
+                everything.
+              </p>
+
+              <p>
+                <strong>As for singling out Allah with control:</strong> it is
+                for a person to believe that no one controls affairs except
+                Allah alone as He the Exalted says:
+              </p>
+              <Verse
+                tone="emerald"
+                arabic="قُلْ مَنْ يَرْزُقُكُمْ مِنَ السَّمَاءِ وَالْأَرْضِ أَمَّنْ يَمْلِكُ السَّمْعَ وَالْأَبْصَارَ وَمَنْ يُخْرِجُ الْحَيَّ مِنَ الْمَيِّتِ وَيُخْرِجُ الْمَيِّتَ مِنَ الْحَيِّ وَمَنْ يُدَبِّرُ الْأَمْرَ ۚ فَسَيَقُولُونَ اللَّهُ ۚ فَقُلْ أَفَلَا تَتَّقُونَ"
+              />
+              <Verse
+                tone="emerald"
+                arabic="فَذَٰلِكُمُ اللَّهُ رَبُّكُمُ الْحَقُّ ۖ فَمَاذَا بَعْدَ الْحَقِّ إِلَّا الضَّلَالُ ۖ فَأَنَّىٰ تُصْرَفُونَ"
+              >
+                “Say (O Muhammad ﷺ): ‘Who provides for you from the sky and from
+                the earth? Or Who owns hearing and sight? And Who brings out the
+                living from the dead and brings out the dead from the living?
+                And Who disposes the affairs?’ They will say: ‘Allah’. Say:
+                ‘Will you not then be afraid of Allah’s punishment (for setting
+                up rivals in worship with Allah)?’ Such is Allah, your Lord in
+                truth. So after the truth what else can there be, save error?
+                How then are you turned away?” (Yoonus: 31-32).
+              </Verse>
+              <p>
+                As regards man’s control, it is restricted to what he possesses
+                and what he is permitted in the Sharee’ah.
+              </p>
+
+              <Callout tone="emerald" icon={Lightbulb}>
+                The pagans acknowledged Rubūbiyyah—this chapter shows how that
+                still doesn’t equal correct worship (Ulūhiyyah).
+              </Callout>
+
+              <p>
+                This form of Tawheed was not opposed by the polytheists amongst
+                whom the Messengers were raised; they affirmed it as Allah the
+                most High says:
+              </p>
+              <Verse
+                tone="emerald"
+                arabic="وَلَئِنْ سَأَلْتَهُمْ مَنْ خَلَقَ السَّمَاوَاتِ وَالْأَرْضِ لَيَقُولُنَّ اللَّهُ"
+              >
+                “And indeed if you ask them, ‘who has created the heavens and
+                the earth’ they will say: ‘the All- Mighty, the All- Knower
+                created them’ (Zukhruf: 9)
+              </Verse>
+              <p>
+                So, they affirm that Allah is the One Who disposes affairs and
+                it is He in Whose Hand is the dominion of the heavens and the
+                earth. No one is known among humankind to have rejected it. No
+                creature has ever said that the universe has two equal creators.
+              </p>
+              <p>
+                So, no one ever denied Tawheed ar-Ruboobiyyah whether by way of
+                rejection or associating partners (with Him in that) except what
+                Fir’awn did. He rejected it out of arrogance. He rejected
+                Allah’s Lordship and His existence.
+              </p>
+
+              <p>Allah says, telling about him:</p>
+              <Verse
+                tone="emerald"
+                arabic="فَقَالَ أَنَا رَبُّكُمُ الْأَعْلَىٰ"
+              >
+                “And he said: ‘I am your Lord, the most exalted.” (Naazi’aat:
+                24).
+              </Verse>
+              <Verse
+                tone="emerald"
+                arabic="مَا عَلِمْتُ لَكُمْ مِنْ إِلَٰهٍ غَيْرِي"
+              >
+                “I do not know of any other deity for you other than me.”
+                (Qasas: 38)
+              </Verse>
+              <p>
+                He said this out of arrogance, for he knew certainly that he is
+                not the Lord as Allah the Exalted says:
+              </p>
+              <Verse
+                tone="emerald"
+                arabic="وَجَحَدُوا بِهَا وَاسْتَيْقَنَتْهَا أَنْفُسُهُمْ ظُلْمًا وَعُلُوًّا ۚ فَانْظُرْ كَيْفَ كَانَ عَاقِبَةُ الْمُفْسِدِينَ"
+              >
+                “And they belied them (the signs) wrongfully and arrogantly
+                though their ownselves were convinced thereof…” (Naml: 14).
+              </Verse>
+              <p>
+                Allah also says, while quoting Moosaa (عليه السلام) during his
+                argument with him (Fir’awn):
+              </p>
+              <Verse
+                tone="emerald"
+                arabic="قَالَ لَقَدْ عَلِمْتَ مَا أَنْزَلَ هَٰؤُلَاءِ إِلَّا رَبُّ السَّمَاوَاتِ وَالْأَرْضِ بَصَائِرَ ۖ وَإِنِّي لَأَظُنُّكَ يَا فِرْعَوْنُ مَثْبُورًا"
+              >
+                “Verily, you know that these signs have been sent down by none
+                but the Lord of the heavens and the earth.” (Israa: 102)
+              </Verse>
+              <p>
+                He, in his self affirms that the Lord is Allah the Mighty and
+                Sublime.
+              </p>
+
+              <p>
+                Similarly, the fire-worshippers deny Tawheed ar-Ruboobiyyah by
+                way of associating partners with Him because they say: ‘the
+                universe has two creators; light and darkness’ even though they
+                did not regard both creators as equals.
+              </p>
+              <p>
+                So they say, ‘Light is better than darkness because it brings
+                goodness while darkness brings evil; and the one who creates
+                good is better than the one who creates evil. Also, darkness is
+                non-existent; it brings no brightness but light is existence, it
+                illuminates and as such, is essentially better’.
+              </p>
+              <p>
+                They also mention a third difference that light is pre-existent
+                in the parlance of the philosophers while they differ regarding
+                darkness; was it pre-existent too or later created? They hold
+                these two views.
+              </p>
+            </Section>
+
+            {/* Rational proofs */}
+            <Section
+              id="rational"
+              title="Rational proofs that the Creator of the universe is One:"
+              tone="amber"
+            >
+              <p>Allah the Exalted says:</p>
+              <Verse
+                tone="amber"
+                arabic="مَا اتَّخَذَ اللَّهُ مِنْ وَلَدٍ وَمَا كَانَ مَعَهُ مِنْ إِلَٰهٍ ۚ إِذًا لَذَهَبَ كُلُّ إِلَٰهٍ بِمَا خَلَقَ وَلَعَلَا بَعْضُهُمْ عَلَىٰ بَعْضٍ ۚ سُبْحَانَ اللَّهِ عَمَّا يَصِفُونَ"
+              >
+                “No son did Allah beget nor is there any ilaah (god) along with
+                him; (if there had been many gods), Behold! Each god would have
+                taken away what he created, and some would have tried to
+                overcome others.” (Mu’minoon: 91)
+              </Verse>
+              <p>
+                <HL tone="amber">
+                  If we affirm two creators for the universe, each creator would
+                  have wished to hold on to what he has created…
+                </HL>{" "}
+                reserved them for himself alone as is the practice of the Kings
+                who would never allow anyone to share (anything with them).
+              </p>
+              <p>
+                When he is alone in its ownership, he would wish for another
+                thing, and that is, that the authority belongs to him alone. No
+                one should share (anything with him in it). So when he desires
+                the authority, each of them is either unable to overcome the
+                other or one of them holds sway over the other. If one of them
+                both dominates the other then his Ruboobiyyah (Lordship) over
+                him is established. However, if either of them is incapable of
+                overcoming the other, the Ruboobiyyah (Lordship) ceases to exist
+                with them because the incapable is not worthy of being a Lord.
+              </p>
+            </Section>
+
+            {/* Ulūhiyyah / ʿIbādah */}
+            <Section
+              id="uluhiyyah"
+              title="The Second Form: Tawheed al-Uloohiyyah"
+              tone="sky"
+              subtitle="Also called Tawheed al-‘Ibaadah (singling out Allah with worship)."
+            >
+              <p>
+                <HL tone="sky">
+                  It is also called Tawheed al-‘Ibaadah… When it is mentioned in
+                  connection with Allah, it is called Tawheed al-Uloohiyyah; but
+                  if it is mentioned in connection with the creatures, it is
+                  called Tawheed al-‘Ibaadah.
+                </HL>
+              </p>
+              <p>
+                It is to single out Allah the Mighty and Sublime with worship.
+                Therefore, the One deserving of worship is Allah the Exalted. He
+                says:
+              </p>
+              <Verse
+                tone="sky"
+                arabic="ذَٰلِكَ بِأَنَّ اللَّهَ هُوَ الْحَقُّ وَأَنَّ مَا يَدْعُونَ مِنْ دُونِهِ هُوَ الْبَاطِلُ وَأَنَّ اللَّهَ هُوَ الْعَلِيُّ الْكَبِيرُ"
+              >
+                “That is because it is Allah alone Who is the True God, and
+                whatever they call upon beside Him is false, and because it is
+                Allah alone Who is the Most High, the Incomparably Great.”
+                (Luqman: 30)
+              </Verse>
+              <p>The term Al-‘Ibaadah is widely used for two things:</p>
+              <p>
+                <strong>First:</strong> Worship; that is submitting to Allah the
+                Mighty and Sublime by acting upon His orders and abstaining from
+                His prohibitions out of love and reverence (for Him).
+              </p>
+              <p>
+                <strong>Second:</strong> What by which worship is done. This is,
+                according to Shaykh al-Islam Ibn Taymiyyah: “An inclusive word
+                for all that Allah loves and is pleased with; of utterances and
+                deeds both manifest and hidden”.
+              </p>
+              <p>
+                For example, the Salat; its observance is worship, it is
+                worshipping. The same Salat is worship, that is, what with which
+                one worships.
+              </p>
+              <p>
+                To single out Allah with this form of Tawheed is to be
+                subservient to Allah alone, submitting to Him alone out of love
+                and reverence for Him, and worshipping Him with what He has
+                approved.
+              </p>
+              <p>Allah the Exalted says:</p>
+              <Verse
+                tone="sky"
+                arabic="فَلَا تَجْعَلُوا لِلَّهِ أَنْدَادًا وَأَنْتُمْ تَعْلَمُونَ"
+              >
+                “So set up not another god with lest Allah sits you down
+                condemned and forsaken.” (Israai: 22).
+              </Verse>
+              <p>He the most High also says:</p>
+              <Verse tone="sky" arabic="الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ">
+                “All praise is due to Allah alone, Lord of all the worlds.”
+                (Faatiha: 1)
+              </Verse>
+              <p>
+                By describing Himself as the Lord of the worlds, it is like
+                stating the reason for His deserving of being worshipped: He is
+                the only worthy Deity since He is the Lord of the worlds. Allah
+                the Exalted says:
+              </p>
+              <Verse
+                tone="sky"
+                arabic="يَا أَيُّهَا النَّاسُ اعْبُدُوا رَبَّكُمُ الَّذِي خَلَقَكُمْ وَالَّذِينَ مِنْ قَبْلِكُمْ لَعَلَّكُمْ تَتَّقُونَ"
+              >
+                “O you mankind! Worship your Lord Who created you and those
+                before you, so that you may attain righteousness.” (al-Baqarah:
+                21).
+              </Verse>
+              <p>
+                <HL>
+                  {" "}
+                  The One Who is set apart with creation is the One deserving of
+                  been worshipped.
+                </HL>
+              </p>
+              <p>
+                It is from sheer foolishness to make a creature which was only
+                brought into existence and will perish a deity whom you worship
+                when in reality, it cannot benefit you. It can neither bring you
+                to life nor sustain you nor extend your lifespan.
+              </p>
+              <p>
+                As such, it is also from stupidity that you go to the grave of
+                someone who is already rotten in the grave, to supplicate to him
+                and worship him. He is rather in need of your supplications
+                while you are not in any need of supplicating to him. He cannot
+                bring benefit or harm to himself; how could he then have such an
+                ability regarding others?!
+              </p>
+              <p>
+                This category of Tawheed is disbelieved and rejected by the
+                majority of creation, and owing to this fact; Allah sent the
+                Messengers (عليهم السلام) and sent down books to them. Allah the
+                Exalted says:
+              </p>
+              <Verse
+                tone="sky"
+                arabic="وَمَا أَرْسَلْنَا مِنْ قَبْلِكَ مِنْ رَسُولٍ إِلَّا نُوحِي إِلَيْهِ أَنَّهُ لَا إِلَٰهَ إِلَّا أَنَا فَاعْبُدُونِ"
+              >
+                “And we did not send any Messenger before You (O Muhammad ﷺ) but
+                we inspired Him (saying): none has the Right to be worshipped
+                but I (Allah), so Worship Me (Alone and none else).” (Anbiyaa:
+                25)
+              </Verse>
+              <p>
+                Yet, the followers of the Messengers (عليهم السلام) were very
+                few. Allah’s Messenger ﷺ said, “…and I saw a prophet with a
+                group of people; and a prophet with one or two persons and a
+                prophet with whom there was nobody”. (1)
+              </p>
+
+              <Callout tone="sky" icon={AlertTriangle}>
+                Most people stumble in <strong>Ulūhiyyah (worship)</strong>, not
+                in acknowledging a Creator—so this is where your attention
+                should be strongest.
+              </Callout>
+            </Section>
+
+            {/* Note */}
+            <Section id="note" title="Note:" tone="indigo">
+              <p>
+                It is amazing that most of the later authors on the subject of
+                Tawheed emphasize Tawheed ar-Ruboobiyyah (Allah’s oneness in His
+                Lordship) as if they are addressing a people who reject the
+                existence of the Lord. Although those who reject the Lord may be
+                found, quite a large number (of even) Muslims fall into
+                associating partners with Allah in worship.
+              </p>
+              <p>
+                <HL tone="indigo">
+                  Therefore, it is essential to pay attention to this aspect of
+                  Tawheed…
+                </HL>{" "}
+                so that we make it known to those Muslims who say they are
+                Muslims but are actually polytheists while they know not.
+              </p>
+            </Section>
+
+            {/* Asmāʾ wa Ṣifāt */}
+            <Section
+              id="asma-sifat"
+              title="The Third Category: Tawheed al-Asmaa was-Sifaat"
+              tone="rose"
+            >
+              <p>
+                <HL tone="rose">
+                  This is to single out Allah the Mighty and Sublime with His
+                  Names and Attributes.
+                </HL>{" "}
+                This entails two things:
+              </p>
+              <p>
+                <strong>Firstly: Affirmation;</strong> that is, we should affirm
+                for Allah the Mighty and Sublime, all His Names and Attributes
+                which He affirmed for Himself in His Book or in the Sunnah of
+                His Prophet ﷺ.
+              </p>
+              <p>
+                <strong>Secondly: Rejection of Like;</strong> that is, we should
+                not associate any partner with Allah in His Names and Attributes
+                as He the Exalted says:
+              </p>
+              <Verse
+                tone="rose"
+                arabic="لَيْسَ كَمِثْلِهِ شَيْءٌ ۖ وَهُوَ السَّمِيعُ الْبَصِيرُ"
+              >
+                “There is nothing whatever like unto Him, and He is the
+                All-Hearing, the All-Seeing.” (Ash Shuraa: 11)
+              </Verse>
+              <p>
+                This verse proves that in all His Attributes, no one is like Him
+                among the creatures. Even if they share in the basic meaning (of
+                the word), they actually differ in its essence. Therefore,
+                whoever does not affirm what Allah has affirmed for Himself is a
+                Mu’attl (denier) and this rejection of his is like that of
+                Fir’awn.
+              </p>
+              <p>
+                But whoever affirms them but makes Tashbeeh (giving semblance of
+                Human attributes to Allah) is like the idolaters who join
+                partners with Allah in worship while the one who affirms the
+                Names and Attributes without joining equals (with Allah) is from
+                the monotheists.
+              </p>
+              <p>
+                It is regarding this category of Tawheed that some among the
+                Muslims went astray and got split into many sects. Some of them
+                followed the path of Ta’teel (rejection of Allah’s Names and
+                Attributes) and reject them. They reject the Attributes claiming
+                to uphold Allah’s greatness thereby, but they are astray! This
+                is owing to the fact that He Whose greatness is been actually
+                defended is He regarding Whom defective attributes and blemishes
+                are rejected. His words will be defended so that it is not
+                unclear or misleading.
+              </p>
+              <p>
+                So if one says, ‘Allah does not have hearing, sight, knowledge
+                or ability,’ he has not upheld perfection for Allah, but rather,
+                he has attributed the worst of deficiencies to Him, and ascribed
+                confusion and misguidance to His words because Allah repeatedly
+                mentions and affirms in His speech that He is:
+              </p>
+              <p dir="rtl" className="font-semibold">
+                السَّمِيعُ الْبَصِيرُ
+              </p>
+              <p>“Al-Hearing, the All-Seeing”</p>
+              <p dir="rtl" className="font-semibold">
+                الْعَزِيزُ الْحَكِيمُ
+              </p>
+              <p>“The Noble, the Wise”</p>
+              <p dir="rtl" className="font-semibold">
+                الْغَفُورُ الرَّحِيمُ
+              </p>
+              <p>“The Oft Forgiving, the Merciful”</p>
+              <p>
+                So, if He affirms them (i.e. the Attributes) in His Speech while
+                He does not possess them, it is from the worst of confusions,
+                misguidance and great defect in the Speech of Allah the Mighty
+                and Sublime!
+              </p>
+              <p>
+                Some of them took to making Tamtheel (likening Allah’s
+                Attributes to those of the creatures) claiming to affirm what
+                Allah describes Himself with! They are astray because they have
+                not estimated Allah His Right estimate since they ascribe
+                blemish and defect to Him by considering the One who is perfect
+                in every respect like the one who is defective in every respect.
+              </p>
+              <blockquote className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 leading-7">
+                Don’t you see that the sword is been under-estimated If it is
+                said that the sword was no more than a stick?!
+              </blockquote>
+              <p>
+                How about comparing the Perfect with the defective? This is from
+                the most serious crime against Allah the Mighty and Sublime!
+              </p>
+              <p>
+                However, the Mu’attiloon (deniers of Allah’s Names and
+                Attributes) are far more grievous in their rejection although
+                both parties have not estimated Allah in His right estimate.
+              </p>
+              <p>
+                So, what is obligatory for us is to believe in whatever Allah
+                describes and names Himself with in His Book and upon the tongue
+                of His Messenger ﷺ without making Tahreef (distortion) or
+                Ta’teel (rejection) or Takyeef (saying how) or Tamtheel
+                (likening).
+              </p>
+              <p>
+                This was the position of Shaykh al-Islam Ibn Taymiyyah رحمه الله
+                and others among the people of knowledge.
+              </p>
+              <p>
+                Tahreef (distortion) is with regards to the texts, Ta’teel
+                (rejection) is concerning the beliefs, Takyeef (saying how) is
+                about the attribute, Tamtheel (likening) is with respect to the
+                attribute too except that it is more specific than Takyeef.
+                Whoever makes Tamtheel (likening) has made Takyeef (saying how)
+                but not the other way round. So it is pertinent that our creed
+                is free from these four things.
+              </p>
+              <p>
+                What we meant by Tahreef here is: the Ta’weel (interpretation)
+                done by those who distort the texts regarding the Attributes
+                because they call themselves Ahl al-Ta’weel (the people of
+                interpretation) due to the toning down approach that they follow
+                since the heart basically detests the word, Tahreef
+                (distortion). However, this is from word decoration and
+                allurement to the people so that they do not refuse it.
+              </p>
+              <p>
+                The Ta’weel (interpretation) they make is in essence, Tahreef
+                (distortion) which is to twist the word from its apparent
+                meaning. So we say: if this twist is proven by sound evidence,
+                then it is not Ta’weel (interpretation) in the manner you
+                intend; it is rather Tafseer, explanation. However, if it is not
+                supported by any sound proof, it is Tahreef (distortion) and
+                twisting the words away from their places.
+              </p>
+              <p>
+                Those are the people who went astray through this path. They
+                began to affirm attributes but with Tahreef (distortion). They
+                are astray, and are on a path contrary to that of the People of
+                the Sunnah and the Jama’ah.
+              </p>
+              <p>
+                In this regard, they should not to be described as Ahl as-Sunnah
+                wal-Jama’ah since affiliation necessitates ascription. The Ahl
+                as-Sunnah wal-Jama’ah are ascribed to the Sunnah because they
+                stick to it; but those people do not stick to the Sunnah
+                regarding their position of Tahreef.
+              </p>
+              <p>
+                Also, the word Jama’ah basically means: gathering, whereas they
+                are not agreed in their creed. Their books contain
+                interpolations, contradictions, and inconsistencies so much so
+                that a group among them would declare another as being misguided
+                while it still contradicts itself!
+              </p>
+              <p>
+                The one who gave the commentary of the book, at-Tahaawiyyah, did
+                quote a statement of al-Ghazalee – one of those who attained the
+                apex in theological rhetoric – when he read those statements of
+                error, inconsistency and the contradiction upon which the
+                theological rhetoricians are, and the fact that they are not
+                upon any certainty about their views. (1)
+              </p>
+              <p>Ar-Raazee was one of their leaders too, he said:</p>
+              <blockquote className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 leading-7">
+                The ultimate end of giving preference to the intellect (over
+                revelation) is vanity!
+                <br />
+                And most of the efforts of the scholars (of theological
+                rhetorics) is misguidance!
+                <br />
+                Our souls are in desolation inside our bodies.
+                <br />
+                While the ultimate goal of our lives is towards harmful and bad
+                consequences.
+                <br />
+                We have not gained from our researches throughout our lives
+                Other than that we compiled hearsays!
+              </blockquote>
+              <p>
+                He also said: “I had scrutinized the path of the freethinkers
+                and the methodology of the philosophers but I have not seen in
+                it healing any sick, neither does it satiate the thirsty.
+                However, I found the best way to be that of the Qur’an; I read
+                the following and affirm;
+              </p>
+              <Verse tone="rose" arabic="الرَّحْمَٰنُ عَلَى الْعَرْشِ اسْتَوَى">
+                “He is the Gracious God Who has settled Himself firmly on the
+                throne.” (Taahaa: 5),
+              </Verse>
+              <Verse
+                tone="rose"
+                arabic="إِلَيْهِ يَصْعَدُ الْكَلِمُ الطَّيِّبُ"
+              >
+                “Unto Him ascend pure words…” (Faatir: 10)
+              </Verse>
+              <p>I also read the following and negate accordingly;</p>
+              <Verse
+                tone="rose"
+                arabic="لَيْسَ كَمِثْلِهِ شَيْءٌ ۖ وَهُوَ السَّمِيعُ الْبَصِيرُ"
+              >
+                “There is nothing whatever like unto Him, and He is the
+                All-Hearing, the All-Seeing.” (Ash Shuraa: 11)
+              </Verse>
+              <Verse tone="rose" arabic="وَلَا يُحِيطُونَ بِهِ عِلْمًا">
+                “…but they cannot compass it with their knowledge.” (Taahaa:
+                110),
+              </Verse>
+              <p>
+                That is, I negate likening anything to Him and compassing Him
+                with knowledge. Whoever experiences the like of what I
+                experienced will recognize what I have recognized.” (1)
+              </p>
+              <p>
+                You will find them confused and inconsistent, not having any
+                certainty about what they are upon. However, you will find the
+                one Allah has guided to the straight path tranquil and
+                delighted, calm.
+              </p>
+              <p>
+                He reads from the Book of Allah and the Sunnah of His Prophet ﷺ.
+                He would affirm whatever Allah affirms for himself of Names and
+                Attributes since no one knows Allah better than Allah, and no
+                one is truer in Speech than Allah or more explicit than Him the
+                Mighty and Sublime as He the Exalted says:
+              </p>
+              <Verse tone="rose" arabic="يُرِيدُ اللَّهُ لِيُبَيِّنَ لَكُمْ">
+                “Allah desires to make clear to you…” (Nisaa: 26)
+              </Verse>
+              <Verse
+                tone="rose"
+                arabic="يُرِيدُ اللَّهُ أَنْ يُخَفِّفَ عَنْكُمْ"
+              >
+                “Allah explains this to you lest you go astray…” (Nisaa: 176)
+              </Verse>
+              <Verse
+                tone="rose"
+                arabic="وَنَزَّلْنَا عَلَيْكَ الْكِتَابَ تِبْيَانًا لِكُلِّ شَيْءٍ"
+              >
+                “And We have sent down to thee the Book to explain everything.”
+                (Nahl: 89)
+              </Verse>
+              <Verse tone="rose" arabic="وَمَنْ أَصْدَقُ مِنَ اللَّهِ قِيلًا">
+                “…and who can be more truthful than Allah in word?” (Nisaa:
+                122).
+              </Verse>
+              <Verse tone="rose" arabic="وَمَنْ أَصْدَقُ مِنَ اللَّهِ حَدِيثًا">
+                “…And who is more truthful in his word than Allah?” (Nisaa: 87)
+              </Verse>
+              <p>
+                These and other verses prove that Allah gives the fullest
+                explanations to the creatures regarding the path that leads them
+                unto Him. And the greatest explanation that mankind needs are
+                those regarding Allah the Exalted, His Names and Attributes so
+                that we may worship Allah based on clear knowledge. This is
+                because to worship the one whose attributes are unknown to us or
+                one who does not have attributes is never possible. Thus, you
+                must know the attributes of the deity which will in turn, make
+                you turn towards Him and truly worship Him.
+              </p>
+              <p>
+                One must not go beyond his bounds by engaging in Takyeef (saying
+                how) or Tamtheel (likening) for if he is unable to totally grasp
+                whom he is – and he is just between his two sides – then it is
+                with a greater reason that he is unable to completely grasp the
+                true essence of those Attributes with which Allah has described
+                Himself.
+              </p>
+              <p>
+                For this reason, it is obligatory that one holds back from
+                asking the question, ‘why?’ and ‘how?’ regarding Allah’s Names
+                and Attributes. Similarly, he should avoid contemplating about
+                the ‘how’ of existence. If one threads this path, he will have
+                much rest of mind, and this was the way of the righteous
+                predecessors (rahimahumullaah).
+              </p>
+              <p>
+                Thus, when someone approached Imam Malik (رحمه الله) and said:{" "}
+                <em>“O Abu Abdullah,</em>
+              </p>
+              <Verse tone="rose" arabic="الرَّحْمَٰنُ عَلَى الْعَرْشِ اسْتَوَى">
+                “He is the Gracious God Who has settled Himself firmly on the
+                throne.” (Taahaa: 5)
+              </Verse>
+              <p>
+                How did He settle? The Imam bowed his head and said: “al-Istiwaa
+                is not unknown, ‘the how’ is not understandable, to believe in
+                it is obligatory and to ask questions about it is innovation; I
+                consider you an innovator
+              </p>
+              <p>
+                Nevertheless in our times, we have those that say that: ‘Allah
+                descends to the earthly heaven in third part of every night
+                which necessitates that He is in the earthly heaven throughout
+                the nights since the night changes from one place to another
+                across the earth’.
+              </p>
+              <p>
+                The companions (رضي الله عنهم) did not hold such view. Had it
+                been that this thinking should cross the mind of the true
+                believer, Allah would have explained it in the first place or
+                through the tongue of His Messenger ﷺ. He would also have sent
+                someone to ask him about it so that he ﷺ would respond as the
+                companions asked the Messenger of Allah ﷺ about: ‘Where was
+                Allah before He created the heavens and the earth?’ And he ﷺ
+                answered them. (1)
+              </p>
+              <p>
+                This great question proves that Allah explains all that humanity
+                would need in one of the three ways (mentioned above).
+              </p>
+              <p>
+                However, the response to the question on the hadeeth of Allah’s
+                descent (2) is that; as long as the third part of the night
+                remains at a particular location, the descent takes place there
+                while the descent will not occur in other places before the
+                third part of the night or the midnight. There is none like unto
+                Allah the Mighty and Sublime. The hadeeth also proves that the
+                period of the descent ends at the beginning of dawn.
+              </p>
+              <p>
+                It is for us to submit and say: ‘We hear, we obey, we follow and
+                we believe’. This is our duty; we must not go beyond the Qur’an
+                and the hadeeth.
+              </p>
+              <p>And His saying, the Exalted:</p>
+              <Verse
+                tone="rose"
+                arabic="وَمَا خَلَقْتُ الْجِنَّ وَالْإِنْسَ إِلَّا لِيَعْبُدُونِ"
+              >
+                “And I have not created the jinn and the men but that they may
+                worship Me…” (Dhaariyaat: 56)
+              </Verse>
+            </Section>
+          </section>
+        </main>
+      )}
+
+      {view === "bank" && <QuestionBank />}
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200/70 bg-white/70">
+        <div className="mx-auto max-w-7xl px-6 py-8 text-center text-sm text-slate-600">
+          © {new Date().getFullYear()} Bayt Al Rihla. Viewing only — no sign-in
+          required.
         </div>
       </footer>
     </div>
   );
 }
-
-/* ---------- Render quiz when ?quiz=1 ----------
-   Place this INSIDE your component’s body, just BEFORE
-   you return the large article <div>…</div>:
-
-   if (mode === "quiz") {
-     return <KTT02_QuizScreen setSearchParams={setSearchParams} />;
-   }
-
-   That’s all — the article shows normally otherwise.
------------------------------------------------- */
